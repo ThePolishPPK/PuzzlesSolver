@@ -1,0 +1,193 @@
+<html>
+<head>
+	<meta charset="utf-8">
+</head>
+<body>
+	<menu>
+		<input type="number" placeholder="Width" min="1">
+		<input type="number" placeholder="Height" min="1">
+		<button name="Semicolon">Create/Reset</button>
+		<button onclick="Export()">Export to Python code</button>
+		<button onclick="ExportJSON()">Export to JSON</button>
+	</menu>
+	
+	<table id="Board"></table>
+
+	<div id="Edit">
+		<div id="drag" style="width: 100%; height: 20px; background-color: green; text-align: center; color: white; user-select: none;">Drag & Drop<button onclick="dsp(false)">X</button></div>
+		<b>Value: </b><input type="number" min="0"><br>
+		<b style="height: 50px;">Direction: </b><table style="display: inline-block;"><td id="dir"><label></label></td></table>
+		<table>
+			<tr>
+				<td><label for="TOP_LEFT">&#x2196;</label></td>
+				<td><label for="TOP">&#x2191;</label></td>
+				<td><label for="TOP_RIGHT">&#x2197;</label></td>
+			</tr>
+			<tr>
+				<td><label for="LEFT">&#x2190;</label></td>
+				<td><label for="null">?</label></td>
+				<td><label for="RIGHT">&#x2192;</label></td>
+			</tr>
+			<tr>
+				<td><label for="BOTTOM_LEFT">&#x2199;</label></td>
+				<td><label for="BOTTOM">&#x2193;</label></td>
+				<td><label for="BOTTOM_RIGHT">&#x2198;</label></td>
+			</tr>
+		</table>
+		<button name="SaveConfig">Save</button>
+		<div style="display: none;" onchange="updateDirectionPreview();">
+			<input type="radio" value="0" name="direction" id="TOP">
+			<input type="radio" value="1" name="direction" id="TOP_RIGHT">
+			<input type="radio" value="2" name="direction" id="RIGHT">
+			<input type="radio" value="3" name="direction" id="BOTTOM_RIGHT">
+			<input type="radio" value="4" name="direction" id="BOTTOM">
+			<input type="radio" value="5" name="direction" id="BOTTOM_LEFT">
+			<input type="radio" value="6" name="direction" id="LEFT">
+			<input type="radio" value="7" name="direction" id="TOP_LEFT">
+			<input type="radio" value="null" name="direction" id="null">
+		</div>
+	</div>
+<script>
+BoardDOM = document.querySelector("table[id='Board']");
+Board = [];
+
+EditedElement = [null, null];
+
+document.querySelector("button[name='SaveConfig']").onclick = function () {
+	if (EditedElement != [null, null]) {
+		x = EditedElement[0];
+		y = EditedElement[1];
+		Board[y][x][0] = document.querySelector("#Edit>input[type='number']").value;
+		Board[y][x][0] = parseInt(Board[y][x][0])>0? parseInt(Board[y][x][0]) : null;
+		Board[y][x][1] = document.querySelector("input[name='direction']:checked").value;
+		Board[y][x][1] = (Board[y][x][1].toLowerCase() == "null")? null : parseInt(Board[y][x][1]);
+		updateBoard();
+		EditedElement = [null, null];
+	}
+	dsp(false);
+};
+
+function dsp(show) {
+	document.querySelector("#Edit").style.display = (show)? "block" : "none";
+}
+
+function changeData(el) {
+	x = parseInt(el.getAttribute("x"));
+	y = parseInt(el.getAttribute("y"));
+	board = Board[y][x];
+	document.querySelector("#Edit>input[type='number']").value = (board[0] == null)? board[0] : "none";
+	document.querySelector("input[name='direction'][value='"+(board[0] == null? 'null': board[0])+"']").checked = true;
+
+	updateDirectionPreview();
+	EditedElement = [x, y];
+	dsp(true);
+}
+
+function updateDirectionPreview() {
+	document.querySelector("#dir>label").innerText = document.querySelector('label[for="'+document.querySelector("input[name='direction']:checked").id+'"]').innerText
+}
+
+document.querySelector("button[name='Semicolon']").onclick = function () {
+	Board = [];
+	var width = document.querySelector("input[placeholder='Width']").value;
+	var height = document.querySelector("input[placeholder='Height']").value;
+	for (let y=0; y<height; y++) {
+		Board[y] = [];
+		for (let x=0; x<width; x++) {
+			Board[y][x] = [null, null];
+		}
+	}
+	updateBoard();
+};
+function updateBoard() {
+	html = "";
+	for (let y=0; y<Board.length; y++) {
+		html += '<tr>';
+		for (let x=0; x<Board[y].length; x++) {
+			inputOfDir = document.querySelector("input[name='direction'][value='"+(Board[y][x][1] == null? 'null': Board[y][x][1])+"']");
+			html += '<td x="'+x+'" y="'+y+'" onclick="changeData(this);"><p>'+
+			(Board[y][x][0] == null? 'None': Board[y][x][0])+'</p><b>'+
+			document.querySelector("label[for='"+inputOfDir.id+"']").innerText+'</b></td>';
+		}
+		html += '</tr>';
+	}
+	BoardDOM.innerHTML = html;
+}
+
+function printOutput(data) {
+	document.body.innerText = data;
+}
+
+function Export() {
+	data = "(\n";
+	for (let y=0; y<Board.length; y++) {
+		data+="	( ";
+		for (let x=0; x<Board[y].length; x++) {
+			data += "("+(Board[y][x][0] == null? "None": Board[y][x][0])+", ";
+			el = (Board[y][x][1] == null)? null : document.querySelector("[name='direction'][value='"+Board[y][x][1]+"']");
+			data += (el == null? "None" : "Block.DIRECTION_"+el.id)+")"+(x < Board[y].length-1? ", " : " ");
+		}
+		data += "),\n";
+	}
+	data += ")";
+	printOutput(data);
+}
+
+function ExportJSON() {
+	printOutput(JSON.stringify(Board));
+}
+
+</script>
+<style>
+	table {
+		border: 3px solid black;
+	}
+	tr {
+		display: flex;
+	}
+	td {
+		display: block;
+		width: 50px;
+		height: 50px;
+		border: 1px solid black;
+	}
+	label {
+		width: 50px;
+		height: 50px;
+		display: block;
+		font-size: 50px;
+		text-align: center;
+	}
+
+	input[id="TOP"]:checked + label[for="TOP"] {
+		background-color: red;
+	}
+
+	div[id="Edit"] {
+		position: absolute;
+		border: 4px solid green;
+		background-color: rgba(255,255,255,0.8);
+		display: none;
+		top: 0;
+		left: 0;
+	}
+</style>
+<script>
+	isDragged = false;
+	diff = [0, 0];
+	document.querySelector("#drag").onmousedown = function (d) {
+		isDragged = true;
+		diff = [d.layerX, d.layerY];
+	}
+	document.onmouseup = function (d) {
+		isDragged = false;
+	}
+	document.onmousemove = function (d) {
+		if (isDragged) {
+			document.querySelector("#Edit").style.top = (d.pageY - diff[1])+"px";
+			document.querySelector("#Edit").style.left = (d.pageX - diff[0])+"px";
+		}
+	}
+</script>
+</body>
+</html>
