@@ -1,4 +1,4 @@
-import math, json
+import math, json, pdb
 
 class Board:
 	def __init__(self, width: int = None, height: int = None) -> None:
@@ -22,14 +22,16 @@ class Board:
 
 		board = cls(width, len(matrix))
 		boardMap = []
-		for row in matrix:
+		for row in range(len(matrix)):
 			line = []
-			for block in row:
+			for column in range(len(matrix[row])):
 				line.append(
 					Block(
-						direction=block[1],
-						value=block[0],
-						isEnd=(block[0] == (width * len(matrix)))
+						x=column,
+						y=row,
+						direction=matrix[row][column][1],
+						value=matrix[row][column][0],
+						isEnd=(matrix[row][column][0] == (width * len(matrix)))
 					)
 				)
 			boardMap.append(tuple(line))
@@ -62,7 +64,9 @@ class Block:
 	
 	_isEnd = False
 	
-	def __init__(self, direction=None, value=None, isEnd=False) -> None:
+	def __init__(self, x: int, y: int, direction: int = None, value: int = None, isEnd: bool = False) -> None:
+		self.x = x if type(x) == int else None
+		self.y = y if type(y) == int else None
 		self.Direction = None if type(direction) != int or direction >= 8 else direction
 		self.Value = None if type(value) != int else value
 
@@ -78,3 +82,88 @@ class Block:
 	@property
 	def isStart(self) -> bool:
 		return (self.Value == 1) if self.Value != None else False
+
+
+class Solve:
+	def __init__(self, board: Board) -> None:
+		self.Board = board
+		self.Ways = []
+
+	def checkOnlyOneMove(self) -> list:
+		unlinked = self.getMapOfBlocksNotLinking()
+		
+
+
+	def getAllBlocksOnWay(self, direction: int, startPoint: tuple) -> list:
+		if direction == Block.DIRECTION_TOP:
+			x, y = 0, -1
+		elif direction == Block.DIRECTION_TOP_LEFT:
+			x, y = 1, -1
+		elif direction == Block.DIRECTION_LEFT:
+			x, y = 1, 0
+		elif direction == Block.DIRECTION_BOTTOM_LEFT:
+			x, y = 1, 1
+		elif direction == Block.DIRECTION_BOTTOM:
+			x, y = 0, 1
+		elif direction == Block.DIRECTION_BOTTOM_RIGHT:
+			x, y = -1, 1
+		elif direction == Block.DIRECTION_RIGHT:
+			x, y = -1, 0
+		elif direction == Block.DIRECTION_TOP_RIGHT:
+			x, y = -1, -1
+		else:
+			raise ValueError("Parameter 'direction' isn't correct")
+
+		step = 1
+		blocks = []
+		while startPoint[0] + (step*x) in range(self.Board.Width) and startPoint[1] + (step*y) in range(self.Board.Height):
+			blocks.append(self.Board[startPoint[0] + (step*x), startPoint[1] + (step*y)])
+			step += 1
+		return blocks
+
+	def getMapOfBlocksNotLinking(self) -> list:
+		blocks = [ [True]*self.Board.Width for _ in range(self.Board.Height) ]
+
+		allBlocksInBoard = dict(self._allNumeredBlocksInBoard())
+		for block in allBlocksInBoard.keys():
+			if block + 1 in allBlocksInBoard.keys():
+				axis = allBlocksInBoard[block]
+				blocks[axis[1]][axis[0]] = False
+
+		for x in range(self.Board.Width):
+			for y in range(self.Board.Height):
+				if self.Board[x, y].isEnd:
+					blocks[y][x] = False
+
+		for way in self.Ways:
+			for block in way[0:-1]:
+				blocks[block[1]][block[0]] = False
+
+		return blocks
+
+	def getMapOfBlocksNotLinked(self) -> list:
+		blocks = [ [True]*self.Board.Width for _ in range(self.Board.Height) ]
+
+		allUsedBlocksInBoard = dict(self._allNumeredBlocksInBoard())
+		for block in allUsedBlocksInBoard.keys():
+			if block-1 in allUsedBlocksInBoard.keys():
+				blocks[allUsedBlocksInBoard[block][1]][allUsedBlocksInBoard[block][0]] = False
+
+		for x in range(self.Board.Width):
+			for y in range(self.Board.Height):
+				if self.Board[x, y].isStart:
+					blocks[y][x] = False
+
+		for way in self.Ways:
+			for block in way[1:]:
+				blocks[block[1]][block[0]] = False
+
+		return blocks
+
+	def _allNumeredBlocksInBoard(self) -> list:
+		allBlocksInBoard = []
+		for x in range(self.Board.Width):
+			for y in range(self.Board.Height):
+				if self.Board[x, y].Value != None:
+					allBlocksInBoard.append((self.Board[x, y].Value, (x, y)))
+		return allBlocksInBoard
