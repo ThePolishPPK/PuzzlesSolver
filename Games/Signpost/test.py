@@ -102,12 +102,12 @@ class Test_SolveMethods(unittest.TestCase):
 		dataSet = (
 			({board[2, 1], board[2, 0]}, (2, 2), "TOP"),
 			({board[2, 3]}, (2, 2), "BOTTOM"),
-			({board[2, 1], board[3, 1]}, (1, 1), "LEFT"),
-			({board[0, 1]}, (1, 1), "RIGHT"),
-			({board[2, 2], board[3, 1]}, (1, 3), "TOP_LEFT"),
-			({board[1, 1], board[2, 2], board[3, 3]}, (0, 0), "BOTTOM_LEFT"),
-			({board[1, 2], board[0, 3]}, (2, 1), "BOTTOM_RIGHT"),
-			({board[1, 2], board[0, 1]}, (2, 3), "TOP_RIGHT")
+			({board[2, 1], board[3, 1]}, (1, 1), "RIGHT"),
+			({board[0, 1]}, (1, 1), "LEFT"),
+			({board[2, 2], board[3, 1]}, (1, 3), "TOP_RIGHT"),
+			({board[1, 1], board[2, 2], board[3, 3]}, (0, 0), "BOTTOM_RIGHT"),
+			({board[1, 2], board[0, 3]}, (2, 1), "BOTTOM_LEFT"),
+			({board[1, 2], board[0, 1]}, (2, 3), "TOP_LEFT")
 		)
 
 		for data in dataSet:
@@ -123,7 +123,35 @@ class Test_SolveMethods(unittest.TestCase):
 				)
 			)
 
+	def test_checkOnlyOneMove_noWays(self):
+		board = Board.parse(TestLinks1)
+		self.assertEqual(
+			set(Solve(board).checkOnlyOneMove()),
+			{
+				(board[0,1], board[0,2]),
+				(board[2,3], board[3,2]),
+				(board[2,1], board[0,1]),
+				(board[3,1], board[1,3]),
+				(board[1,3], board[1,2]),
+				(board[2,2], board[2,3]),
+			}
+		)
 
+	def test_checkOnlyOneMove_withWays(self):
+		board = Board.parse(TestLinks1)
+		solver = Solve(board)
+		solver.Ways = [
+			[(2,1), (0,1), (0,2)],
+			[(3,1), (1,3)]
+		]
+		self.assertEqual(
+			set(solver.checkOnlyOneMove()),
+			{
+				(board[2,3], board[3,2]),
+				(board[1,3], board[1,2]),
+				(board[2,2], board[2,3]),
+			}
+		)
 
 
 
