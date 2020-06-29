@@ -46,7 +46,7 @@ class Board:
 			return cls._parseMatrix(data)
 
 	def __getitem__(self, pos: tuple) -> tuple:
-		return None if pos[1] > self.Width or pos[0] > self.Height else self._map[pos[1]][pos[0]]
+		return None if pos[0] >= self.Width or pos[1] >= self.Height else self._map[pos[1]][pos[0]]
 
 	def __len__(self) -> tuple:
 		return (self.Width, self.Height)
@@ -83,6 +83,14 @@ class Block:
 	def isStart(self) -> bool:
 		return (self.Value == 1) if self.Value != None else False
 
+	def __repr__(self):
+		return "<Block(x={}, y={}, direction={}, value={})>".format(
+			self.x,
+			self.y,
+			self.Direction,
+			self.Value
+		)
+
 
 class Solve:
 	def __init__(self, board: Board) -> None:
@@ -90,34 +98,76 @@ class Solve:
 		self.Ways = []
 
 	def checkOnlyOneMove(self) -> list:
-		unlinked = self.getMapOfBlocksNotLinking()
-		
+		unlinking = self.getMapOfBlocksNotLinking()
+		unlinked = self.getMapOfBlocksNotLinked()
+		output = []
+		for x in range(self.Board.Width):
+			for y in range(self.Board.Height):
+				if unlinking[y][x]:
+					block = self.Board[x, y]
+					inc = self._getWayCoordinatesIncrement(block.Direction) # INCrementation
+					
+					unlkd = [] # UNLinKeD
+					step = 1
+					while True:
+						wx, wy = (block.x+(inc[0]*step), block.y+(inc[1]*step))
+						if wx < 0 or wy < 0:
+							break
+						try:
+							if unlinked[wy][wx]:
+								if block.Value is not None and self.Board[wx, wy].Value is not None:
+									if block.Value + 1 == self.Board[wx, wy].Value:
+										unlkd = [self.Board[wx, wy]]
+								else:
+									unlkd.append(self.Board[wx, wy])
+						except IndexError:
+							break
+						else:
+							step += 1
+					if len(unlkd) == 1:
+						inWays = False
+						for way in self.Ways+output:
+							if (unlkd[0].x, unlkd[0].y) in way:
+								inWays = True
+								break
+						if not inWays:
+							output.append((block, unlkd[0]))
+							unlinked[unlkd[0].y][unlkd[0].x] = False
+							unlinking[block.y][block.x] = False
+		return output
 
-
-	def getAllBlocksOnWay(self, direction: int, startPoint: tuple) -> list:
+	@staticmethod
+	def _getWayCoordinatesIncrement(direction: int) -> tuple:
 		if direction == Block.DIRECTION_TOP:
 			x, y = 0, -1
 		elif direction == Block.DIRECTION_TOP_LEFT:
-			x, y = 1, -1
+			x, y = -1, -1
 		elif direction == Block.DIRECTION_LEFT:
-			x, y = 1, 0
+			x, y = -1, 0
 		elif direction == Block.DIRECTION_BOTTOM_LEFT:
-			x, y = 1, 1
+			x, y = -1, 1
 		elif direction == Block.DIRECTION_BOTTOM:
 			x, y = 0, 1
 		elif direction == Block.DIRECTION_BOTTOM_RIGHT:
-			x, y = -1, 1
+			x, y = 1, 1
 		elif direction == Block.DIRECTION_RIGHT:
-			x, y = -1, 0
+			x, y = 1, 0
 		elif direction == Block.DIRECTION_TOP_RIGHT:
-			x, y = -1, -1
+			x, y = 1, -1
 		else:
 			raise ValueError("Parameter 'direction' isn't correct")
+		return (x, y)
+
+	def getAllBlocksOnWay(self, direction: int, startPoint: tuple) -> list:
+		x, y = self._getWayCoordinatesIncrement(direction)
 
 		step = 1
 		blocks = []
-		while startPoint[0] + (step*x) in range(self.Board.Width) and startPoint[1] + (step*y) in range(self.Board.Height):
-			blocks.append(self.Board[startPoint[0] + (step*x), startPoint[1] + (step*y)])
+		while True:
+			wx, wy = (startPoint[0] + (step*x), startPoint[1] + (step*y))
+			if wx not in range(self.Board.Width) or wy not in range(self.Board.Height):
+				break
+			blocks.append(self.Board[wx, wy])
 			step += 1
 		return blocks
 
