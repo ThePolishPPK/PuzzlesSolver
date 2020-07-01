@@ -136,6 +136,50 @@ class Solve:
 							unlinking[block.y][block.x] = False
 		return output
 
+	def checkOnlyOneLinking(self) -> list:
+		unLinking = self.getMapOfBlocksNotLinking()
+		unLinked = self.getMapOfBlocksNotLinked()
+		output = []
+		ol = None # Output Length
+		while ol != len(output):
+			ol = len(output)
+			for x in range(self.Board.Width):
+				for y in range(self.Board.Height):
+					if unLinked[y][x]:
+						block = self.Board[x, y]
+						unlking = [] # UNLinKING
+						for direction in range(8):
+							inc = self._getWayCoordinatesIncrement(direction)
+							step = 1
+							while True:
+								if type(unlking) == Block:
+									break
+								wx, wy = (x+(step*inc[0]), y+(step*inc[1]))
+								if wx < 0 or wy < 0:
+									break
+								try:
+									if unLinking[wy][wx]:
+										b = self.Board[wx, wy]
+										
+										if self._getWayCoordinatesIncrement(b.Direction) == (-inc[0], -inc[1]):
+											if block.Value is not None and b.Value is not None:
+												if block.Value-1 == b.Value:
+													unlking = b
+											else:
+												unlking.append(b)
+								except IndexError:
+									break
+								else:
+									step += 1
+						if type(unlking) == Block:
+							unlking = [unlking]
+
+						if len(unlking) == 1:
+							output.append((unlking[0], block))
+							unLinking[unlking[0].y][unlking[0].x] = False
+							unLinked[block.y][block.x] = False
+		return output
+
 	@staticmethod
 	def _getWayCoordinatesIncrement(direction: int) -> tuple:
 		if direction == Block.DIRECTION_TOP:
