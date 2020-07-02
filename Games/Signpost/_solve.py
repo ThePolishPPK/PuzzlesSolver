@@ -6,6 +6,12 @@ class Board:
 		self.Width = 0 if type(width) != int else width
 		self.Height = 0 if type(height) != int else height
 
+	def getValuesMatrix(self):
+		return tuple(
+			tuple(block.Value for block in row)
+			for row in self._map
+		)
+
 	@classmethod
 	def _parseJSON(cls, data: str) -> 'Board':
 		return cls._parseMatrix(json.loads(data))
@@ -179,6 +185,18 @@ class Solve:
 							unLinking[unlking[0].y][unlking[0].x] = False
 							unLinked[block.y][block.x] = False
 		return output
+
+	def commitWay(self, way: list) -> None:
+		firstElementValue = None
+		for step in range(len(way)):
+			firstElementValue = self.Board[way[step][0], way[step][1]].Value
+			if firstElementValue is not None:
+				firstElementValue -= step
+				break
+		if type(firstElementValue) is not int or firstElementValue < 1:
+			raise ValueError("Cannot find any correct value in this Way!")
+		for wayNum in range(len(way)):
+			self.Board[way[wayNum][0], way[wayNum][1]].Value = firstElementValue+wayNum
 
 	@staticmethod
 	def _getWayCoordinatesIncrement(direction: int) -> tuple:

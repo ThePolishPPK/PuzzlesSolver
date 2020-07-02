@@ -191,9 +191,23 @@ class Test_SolveMethods(unittest.TestCase):
 			}
 		)
 
+	def test_commitWay(self):
+		board = Board.parse(TestLinks1)
+		solver = Solve(Board.parse(TestLinks1))
+		solver.Ways = [
+			[(2,0), (2,1), (0,1)],
+			[(2,3), (3,2), (3,1)],
+		]
+		solver.commitWay(solver.Ways[0])
+		solver.commitWay(solver.Ways[1])
+		board._map[1][2].Value = 5
+		board._map[3][2].Value = 9
+		board._map[2][3].Value = 10
 
-
-
+		self.assertEqual(
+			solver.Board.getValuesMatrix(),
+			board.getValuesMatrix()
+		)
 
 if __name__ == "__main__":
 	unittest.main()
