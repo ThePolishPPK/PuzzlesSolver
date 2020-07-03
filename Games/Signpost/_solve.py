@@ -51,6 +51,17 @@ class Board:
 		elif type(data) in (tuple, list):
 			return cls._parseMatrix(data)
 
+	def exportToJSON(self) -> str:
+		return json.dumps(
+			[
+				[
+					[x.Value, x.Direction]
+					for x in y
+				]
+				for y in self._map
+			]
+		)
+
 	def __getitem__(self, pos: tuple) -> tuple:
 		return None if pos[0] >= self.Width or pos[1] >= self.Height else self._map[pos[1]][pos[0]]
 
@@ -125,7 +136,12 @@ class Solve:
 									if block.Value + 1 == self.Board[wx, wy].Value:
 										unlkd = [self.Board[wx, wy]]
 								else:
-									unlkd.append(self.Board[wx, wy])
+									isInWay = False
+									for way in self.Ways:
+										if way[0] == (wx,wy) and way[-1] == (x,y):
+											isInWay = True
+									if not isInWay:
+										unlkd.append(self.Board[wx, wy])
 						except IndexError:
 							break
 						else:
@@ -133,7 +149,7 @@ class Solve:
 					if len(unlkd) == 1:
 						inWays = False
 						for way in self.Ways+output:
-							if (unlkd[0].x, unlkd[0].y) in way:
+							if (unlkd[0].x, unlkd[0].y) in way[1:]:
 								inWays = True
 								break
 						if not inWays:
@@ -179,7 +195,6 @@ class Solve:
 									step += 1
 						if type(unlking) == Block:
 							unlking = [unlking]
-
 						if len(unlking) == 1:
 							output.append((unlking[0], block))
 							unLinking[unlking[0].y][unlking[0].x] = False
@@ -200,22 +215,31 @@ class Solve:
 
 	def addConnectionPointsToWays(self, connectionPoints: list) -> None:
 		self.Ways.extend([[(conn[0].x, conn[0].y), (conn[1].x, conn[1].y)] for conn in connectionPoints])
-		way = 0
-		while way < len(self.Ways):
-			isEndFor = None
-			isStartFor = None
-			for step in range(len(self.Ways)):
-				if self.Ways[step][0] == self.Ways[way][-1]:
-					isStartFor = step
-				elif self.Ways[step][-1] == self.Ways[way][0]:
-					isEndFor = step
-			if isEndFor is not None:
-				self.Ways[way] = self.Ways[isEndFor] + self.Ways[way][1:]
-				del self.Ways[isEndFor]
-			if isStartFor is not None:
-				self.Ways[way] += self.Ways[isStartFor][1:]
-				del self.Ways[isStartFor]
-			way += 1
+		self.compressWays()
+
+	def compressWays(self) -> None:
+		changes = 0
+		while changes > 0:
+			changes = 0
+			way = 0
+			while way < len(self.Ways):
+				step = 0
+				while step < len(self.Ways):
+					if way >= len(self.Ways):
+						break
+					delete = False
+					if self.Ways[step][0] == self.Ways[way][-1]:
+						self.Ways[way] += self.Ways[step][1:]
+						changes += 1
+						delete = True
+					if self.Ways[step][-1] == self.Ways[way][0]:
+						self.Ways[way] = self.Ways[step] + self.Ways[way][1:]
+						changes += 1
+						delete = True
+					if delete:
+						del self.Ways[step]
+					step += 1
+				way += 1
 
 	@staticmethod
 	def _getWayCoordinatesIncrement(direction: int) -> tuple:
