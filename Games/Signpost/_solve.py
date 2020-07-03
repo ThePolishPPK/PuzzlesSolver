@@ -198,6 +198,25 @@ class Solve:
 		for wayNum in range(len(way)):
 			self.Board[way[wayNum][0], way[wayNum][1]].Value = firstElementValue+wayNum
 
+	def addConnectionPointsToWays(self, connectionPoints: list) -> None:
+		self.Ways.extend([[(conn[0].x, conn[0].y), (conn[1].x, conn[1].y)] for conn in connectionPoints])
+		way = 0
+		while way < len(self.Ways):
+			isEndFor = None
+			isStartFor = None
+			for step in range(len(self.Ways)):
+				if self.Ways[step][0] == self.Ways[way][-1]:
+					isStartFor = step
+				elif self.Ways[step][-1] == self.Ways[way][0]:
+					isEndFor = step
+			if isEndFor is not None:
+				self.Ways[way] = self.Ways[isEndFor] + self.Ways[way][1:]
+				del self.Ways[isEndFor]
+			if isStartFor is not None:
+				self.Ways[way] += self.Ways[isStartFor][1:]
+				del self.Ways[isStartFor]
+			way += 1
+
 	@staticmethod
 	def _getWayCoordinatesIncrement(direction: int) -> tuple:
 		if direction == Block.DIRECTION_TOP:

@@ -209,5 +209,43 @@ class Test_SolveMethods(unittest.TestCase):
 			board.getValuesMatrix()
 		)
 
+	def test_addConnectionPointsToWays_noWays(self):
+		board = Board.parse(TestLinks1)
+		solver = Solve(board)
+		points = [ # No logic connection, it's only ways
+			(board[1,2], board[2,3]),
+			(board[0,1], board[3,1]),
+			(board[3,1], board[1,2])
+		]
+		solver.addConnectionPointsToWays(points)
+		self.assertEqual(
+			solver.Ways,
+			[
+				[(0,1), (3,1), (1,2), (2,3)]
+			]
+		)
+
+	def test_addConnectionPointsToWays_withWays(self):
+		board = Board.parse(TestLinks1)
+		solver = Solve(board)
+		points = [
+			(board[1,2], board[1,1]),
+			(board[0,1], board[2,2]),
+			(board[3,3], board[2,0]),
+		]
+		solver.Ways = [
+			[(1,3), (2,3), (1,0), (0,1)],
+			[(3,0), (3,1), (3,2), (3,3)]
+		]
+		solver.addConnectionPointsToWays(points)
+		self.assertEqual(
+			solver.Ways,
+			[
+				[(1,3), (2,3), (1,0), (0,1), (2,2)],
+				[(3,0), (3,1), (3,2), (3,3), (2,0)],
+				[(1,2), (1,1)]
+			]
+		)
+
 if __name__ == "__main__":
 	unittest.main()
