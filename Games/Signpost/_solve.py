@@ -62,6 +62,14 @@ class Board:
 			]
 		)
 
+	def exportToGameID(self) -> str:
+		output = "%sx%s:"%(str(self.Width), str(self.Height))
+		for y in range(self.Height):
+			for x in range(self.Width):
+				output += "" if self[x,y].Value is None else str(self[x,y].Value)
+				output += chr(97 + (0 if self[x,y].Direction is None else self[x,y].Direction))
+		return output
+
 	def __getitem__(self, pos: tuple) -> tuple:
 		return None if pos[0] >= self.Width or pos[1] >= self.Height else self._map[pos[1]][pos[0]]
 
@@ -114,48 +122,77 @@ class Solve:
 		self.Board = board
 		self.Ways = []
 
+	def solve(self) -> list:
+		changes = 1
+		while changes > 0:
+			changes = 0
+			
+			onlyOneLinking = self.checkOnlyOneLinking()
+			changes += len(onlyOneLinking)
+			self.addConnectionPointsToWays(onlyOneLinking)
+			
+			onlyOneMove = self.checkOnlyOneMove()
+			changes += len(onlyOneMove)
+			self.addConnectionPointsToWays(onlyOneMove)
+			
+			onlyOneOnWay = self.checkOneBlockOnWay()
+			changes += len(onlyOneOnWay)
+			self.addConnectionPointsToWays(onlyOneOnWay)
+			
+			for way in self.Ways:
+				try:
+					self.commitWay(way)
+				except:
+					pass
+				else:
+					self.Ways.remove(way)
+		return self.Board.getValuesMatrix()
+
 	def checkOnlyOneMove(self) -> list:
 		unlinking = self.getMapOfBlocksNotLinking()
 		unlinked = self.getMapOfBlocksNotLinked()
 		output = []
-		for x in range(self.Board.Width):
-			for y in range(self.Board.Height):
-				if unlinking[y][x]:
-					block = self.Board[x, y]
-					inc = self._getWayCoordinatesIncrement(block.Direction) # INCrementation
-					
-					unlkd = [] # UNLinKeD
-					step = 1
-					while True:
-						wx, wy = (block.x+(inc[0]*step), block.y+(inc[1]*step))
-						if wx < 0 or wy < 0:
-							break
-						try:
-							if unlinked[wy][wx]:
-								if block.Value is not None and self.Board[wx, wy].Value is not None:
-									if block.Value + 1 == self.Board[wx, wy].Value:
-										unlkd = [self.Board[wx, wy]]
-								else:
-									isInWay = False
-									for way in self.Ways:
-										if way[0] == (wx,wy) and way[-1] == (x,y):
-											isInWay = True
-									if not isInWay:
-										unlkd.append(self.Board[wx, wy])
-						except IndexError:
-							break
-						else:
-							step += 1
-					if len(unlkd) == 1:
-						inWays = False
-						for way in self.Ways+output:
-							if (unlkd[0].x, unlkd[0].y) in way[1:]:
-								inWays = True
+		ol = None # Output Length
+		while ol != len(output):
+			ol = len(output)
+			for x in range(self.Board.Width):
+				for y in range(self.Board.Height):
+					if unlinking[y][x]:
+						block = self.Board[x, y]
+						inc = self._getWayCoordinatesIncrement(block.Direction) # INCrementation
+						
+						unlkd = [] # UNLinKeD
+						step = 1
+						while True:
+							wx, wy = (block.x+(inc[0]*step), block.y+(inc[1]*step))
+							if wx < 0 or wy < 0:
 								break
-						if not inWays:
-							output.append((block, unlkd[0]))
-							unlinked[unlkd[0].y][unlkd[0].x] = False
-							unlinking[block.y][block.x] = False
+							try:
+								if unlinked[wy][wx]:
+									if block.Value is not None and self.Board[wx, wy].Value is not None:
+										if block.Value + 1 == self.Board[wx, wy].Value:
+											unlkd = [self.Board[wx, wy]]
+									else:
+										isInWay = False
+										for way in self.Ways:
+											if way[0] == (wx,wy) and way[-1] == (x,y):
+												isInWay = True
+										if not isInWay:
+											unlkd.append(self.Board[wx, wy])
+							except IndexError:
+								break
+							else:
+								step += 1
+						if len(unlkd) == 1:
+							inWays = False
+							for way in self.Ways+output:
+								if (unlkd[0].x, unlkd[0].y) in way[1:]:
+									inWays = True
+									break
+							if not inWays:
+								output.append((block, unlkd[0]))
+								unlinked[unlkd[0].y][unlkd[0].x] = False
+								unlinking[block.y][block.x] = False
 		return output
 
 	def checkOnlyOneLinking(self) -> list:
@@ -201,6 +238,30 @@ class Solve:
 							unLinked[block.y][block.x] = False
 		return output
 
+	def checkOneBlockOnWay(self) -> list:
+		data = []
+		numeredBlocks = dict( (block[0], self.Board[block[1][0], block[1][1]]) for block in self._allNumeredBlocksInBoard() )
+		num = 0
+		for block in numeredBlocks.values():
+			if (block.Value+2 in numeredBlocks.keys()
+				and block.Value+1 not in numeredBlocks.keys()):
+				for bl in self.getAllBlocksOnWay(block.Direction, (block.x, block.y)):
+					if numeredBlocks[block.Value+2] in self.getAllBlocksOnWay(bl.Direction, (bl.x, bl.y)):
+						data.append((block, bl))
+
+		output = []
+		for block in list(set(x[0] for x in data)):
+			count = 0
+			secondBlock = None
+			for b in data:
+				if b[0] == block:
+					secondBlock = b[1]
+					count += 1
+			if count == 1:
+				if secondBlock.Value is None:
+					output.append((block, secondBlock))
+		return output
+
 	def commitWay(self, way: list) -> None:
 		firstElementValue = None
 		for step in range(len(way)):
@@ -209,7 +270,23 @@ class Solve:
 				firstElementValue -= step
 				break
 		if type(firstElementValue) is not int or firstElementValue < 1:
+			if way in self.Ways:
+				self.Ways.remove(way)
 			raise ValueError("Cannot find any correct value in this Way!")
+		nums = self._allNumeredBlocksInBoard()
+		for wayNum in range(len(way)):
+			for numeredBlock in nums:
+				if (firstElementValue+wayNum == numeredBlock[0]
+					and tuple(numeredBlock[1]) != tuple(way[wayNum][0:2])):
+					raise ValueError("Cannot repeat value!")
+				
+			if (self.Board[way[wayNum][0], way[wayNum][1]].Value is not None
+				and self.Board[way[wayNum][0], way[wayNum][1]].Value != firstElementValue+wayNum):
+				if way in self.Ways:
+					self.Ways.remove(way)
+				raise ValueError("Invalid way")
+		
+
 		for wayNum in range(len(way)):
 			self.Board[way[wayNum][0], way[wayNum][1]].Value = firstElementValue+wayNum
 
@@ -218,7 +295,7 @@ class Solve:
 		self.compressWays()
 
 	def compressWays(self) -> None:
-		changes = 0
+		changes = 1
 		while changes > 0:
 			changes = 0
 			way = 0
@@ -280,13 +357,12 @@ class Solve:
 		blocks = [ [True]*self.Board.Width for _ in range(self.Board.Height) ]
 
 		allBlocksInBoard = dict(self._allNumeredBlocksInBoard())
-		for block in allBlocksInBoard.keys():
-			if block + 1 in allBlocksInBoard.keys():
-				axis = allBlocksInBoard[block]
-				blocks[axis[1]][axis[0]] = False
 
 		for x in range(self.Board.Width):
 			for y in range(self.Board.Height):
+				if self.Board[x, y].Value is not None:
+					if self.Board[x, y].Value+1 in allBlocksInBoard.keys():
+						blocks[y][x] = False
 				if self.Board[x, y].isEnd:
 					blocks[y][x] = False
 
