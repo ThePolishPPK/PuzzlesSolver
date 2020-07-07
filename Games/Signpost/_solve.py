@@ -1,12 +1,34 @@
-import math, json, pdb
+import math, json, re, pdb
 
 class Board:
+	"""
+	Class 'Board' it's a representation of board in game.
+	
+	Attributes:
+		_map (tuple): Contain 'Block' objects in matrix (2D array) in schema like: ( (<Block object>, ...), (...), ... ).
+		Width (int): Contain width of board.
+		Height (int): Contain height of board.
+	"""
+
 	def __init__(self, width: int = None, height: int = None) -> None:
+		"""
+		Constructor for 'Board' class.
+		
+		Parameters:
+			width (int): Width of board. (default: None)
+			height (int): Height of board. (default: None)
+		"""
 		self._map = ()
 		self.Width = 0 if type(width) != int else width
 		self.Height = 0 if type(height) != int else height
 
 	def getValuesMatrix(self):
+		"""
+		Mathod get values for every block and pack in to tuple 2D matrix.
+		
+		Returns:
+			Tuple: 2D array of board values.
+		"""
 		return tuple(
 			tuple(block.Value for block in row)
 			for row in self._map
@@ -14,10 +36,28 @@ class Board:
 
 	@classmethod
 	def _parseJSON(cls, data: str) -> 'Board':
+		"""
+		Method parse json string and return 'Board' object.
+
+		Parameters:
+			data (str): JSON string with saved map.
+
+		Returns:
+			Board: Board object with map defined by JSON data.
+		"""
 		return cls._parseMatrix(json.loads(data))
 
 	@classmethod
 	def _parseMatrix(cls, matrix: tuple) -> 'Board':
+		"""
+		Method parse 2D tuple data set to Board.
+
+		Parameters:
+			matrix (tuple): Matrix with block data in schema: ( ( (<value>, <direction>), ...), ...)
+
+		Returns:
+			Board: Board object with map defined by gived matrix.
+		"""
 		# Matrix validation
 		width = None
 		for row in matrix:
@@ -45,13 +85,71 @@ class Board:
 		return board
 
 	@classmethod
+	def _parseGameID(cls, gameID: str) -> 'Board':
+		"""
+		Method parse Game ID to Board object.
+
+		Parameters:
+			gameID (str): String in schema(RegExp): "[0-9]+x[0-9]+:([0-9]*[a-h])+" eg. "2x2:1cfc4a"
+
+		Returns:
+			Board: Board object with map from gameID.
+		"""
+		boardMap = []
+		width, height = (int(size) for size in gameID.split(":")[0].lower().split("x"))
+		blocks = re.finditer("(?P<Value>([0-9]+)?)(?P<Direction>[a-h])", gameID.split(":")[-1])
+		directions = {
+			'a': Block.DIRECTION_TOP,
+			'b': Block.DIRECTION_TOP_RIGHT,
+			'c': Block.DIRECTION_RIGHT,
+			'd': Block.DIRECTION_BOTTOM_RIGHT,
+			'e': Block.DIRECTION_BOTTOM,
+			'f': Block.DIRECTION_BOTTOM_LEFT,
+			'g': Block.DIRECTION_LEFT,
+			'h': Block.DIRECTION_TOP_LEFT
+		}
+		for y in range(height):
+			line = []
+			for x in range(width):
+				block = next(blocks)
+				line.append(Block(
+					x,
+					y,
+					value=int(block.group("Value")) if block.group("Value") != "" else None,
+					direction=directions[block.group("Direction").lower()]
+				))
+			boardMap.append(line)
+		board = cls(width, height)
+		board._map = boardMap
+		return board
+
+	@classmethod
 	def parse(cls, data) -> 'Board':
+		"""
+		Method detect type of data and create map.
+		Allowed types of data: tuple matrix, JSON matrix data, GameID string.
+
+		Parameters:
+			data: Mixed type, contain board map data.
+
+		Returns:
+			Board: Board object with map maked by given data.
+		"""
 		if type(data) == str:
-			return cls._parseJSON(data)
+			if re.search(r"^[0-9]+x[0-9]+:([0-9]*[a-h])+$", data) is not None:
+				return cls._parseGameID(data)
+			else:
+				return cls._parseJSON(data)
 		elif type(data) in (tuple, list):
 			return cls._parseMatrix(data)
 
 	def exportToJSON(self) -> str:
+		"""
+		Method convert board map to JSON data.
+
+		Returns:
+			str: Board map encoded in JSON data.
+		"""
 		return json.dumps(
 			[
 				[
@@ -63,6 +161,12 @@ class Board:
 		)
 
 	def exportToGameID(self) -> str:
+		"""
+		Method convert board map to GameID data string.
+
+		Returns:
+			str: GameID string in fromat (RegExp): "[0-9]+x[0-9]+:([0-9]*[a-h])+"
+		"""
 		output = "%sx%s:"%(str(self.Width), str(self.Height))
 		for y in range(self.Height):
 			for x in range(self.Width):
@@ -77,6 +181,17 @@ class Board:
 		return (self.Width, self.Height)
 
 class Block:
+	"""
+	Class 'Block' this is representation for every block on Board.
+
+	Attributes:
+		x (int): Value location on x axis. (default: None)
+		y (int): Value location on y axis. (default: None)
+		Direction (int): Integer value for direction way, position 0 is for TOP and next position is in clockwise direction. (default: None)
+		Value (int): Value of block Value. (default: None)
+		isStart (bool): Inform about block status if that is first block (by number equal 1).
+		isEnd (bool): Inform about block status if that is last block (by number width*height or gived information).
+	"""
 	# Direction in clockwise, starting from the top
 	DIRECTION_TOP = 0
 	DIRECTION_TOP_RIGHT = 1
@@ -90,6 +205,16 @@ class Block:
 	_isEnd = False
 	
 	def __init__(self, x: int, y: int, direction: int = None, value: int = None, isEnd: bool = False) -> None:
+		"""
+		Constructor for 'Block' class.
+
+		Parameters:
+			x (int): Location on x axis.
+			y (int): Location on y axis.
+			direction (int): Integer value for direction way, position 0 is for TOP and next position is in clockwise direction. (default: None)
+			value (int): Value of block Value. (default: None)
+			isEnd (bool): Define block status as last block. (default: False)
+		"""
 		self.x = x if type(x) == int else None
 		self.y = y if type(y) == int else None
 		self.Direction = None if type(direction) != int or direction >= 8 else direction
@@ -118,25 +243,46 @@ class Block:
 
 
 class Solve:
+	"""
+	Class 'Solve' make all operations on board and blocks to solve.
+
+	Schemats:
+		ConnectionPoint: It's point described in tuple as (<x>, <y>).
+
+	Attributes:
+		Board (Board): Board object on witch operation will be performed.
+		Ways (list): List of ways. Schema: [[<ConnectionPoint>, <ConnectionPoint>, ...], ...]
+	"""
 	def __init__(self, board: Board) -> None:
+		"""
+		Constructor for 'Solve' class
+
+		Parameters:
+			board (Board): Board object with defined map.
+		"""
 		self.Board = board
 		self.Ways = []
+		self.InvalidWays = set()
 
 	def solve(self) -> list:
-		changes = 1
-		while changes > 0:
-			changes = 0
+		"""
+		Method execute all operations to solve game.
+
+		Returns:
+			tuple: 2D matrix of block Values from solved board.
+		"""
+		changes = 700
+		while changes != 0:
+			
+			changes -= 1
 			
 			onlyOneLinking = self.checkOnlyOneLinking()
-			changes += len(onlyOneLinking)
 			self.addConnectionPointsToWays(onlyOneLinking)
 			
 			onlyOneMove = self.checkOnlyOneMove()
-			changes += len(onlyOneMove)
 			self.addConnectionPointsToWays(onlyOneMove)
 			
 			onlyOneOnWay = self.checkOneBlockOnWay()
-			changes += len(onlyOneOnWay)
 			self.addConnectionPointsToWays(onlyOneOnWay)
 			
 			for way in self.Ways:
@@ -149,6 +295,13 @@ class Solve:
 		return self.Board.getValuesMatrix()
 
 	def checkOnlyOneMove(self) -> list:
+		"""
+		Method check block to find all blocks that can remain linked.
+		Method don't allow reps already existed connections in Ways or in Board.
+
+		Returns:
+			list: 2D list with connection points.
+		"""
 		unlinking = self.getMapOfBlocksNotLinking()
 		unlinked = self.getMapOfBlocksNotLinked()
 		output = []
@@ -189,13 +342,19 @@ class Solve:
 								if (unlkd[0].x, unlkd[0].y) in way[1:]:
 									inWays = True
 									break
-							if not inWays:
-								output.append((block, unlkd[0]))
-								unlinked[unlkd[0].y][unlkd[0].x] = False
-								unlinking[block.y][block.x] = False
+							output.append((block, unlkd[0]))
+							unlinked[unlkd[0].y][unlkd[0].x] = False
+							unlinking[block.y][block.x] = False
 		return output
 
 	def checkOnlyOneLinking(self) -> list:
+		"""
+		Method check blocks to find only one block linking block.
+		Method don't allow reps of connections.
+
+		Returns:
+			list: 2D list with connection Points.
+		"""
 		unLinking = self.getMapOfBlocksNotLinking()
 		unLinked = self.getMapOfBlocksNotLinked()
 		output = []
@@ -239,6 +398,13 @@ class Solve:
 		return output
 
 	def checkOneBlockOnWay(self) -> list:
+		"""
+		Method checks block with values and posiblity of existing one block connection those points.
+		Method don't allow reps in Ways.
+
+		Returns:
+			list: 2D list with connection points.
+		"""
 		data = []
 		numeredBlocks = dict( (block[0], self.Board[block[1][0], block[1][1]]) for block in self._allNumeredBlocksInBoard() )
 		num = 0
@@ -260,9 +426,17 @@ class Solve:
 			if count == 1:
 				if secondBlock.Value is None:
 					output.append((block, secondBlock))
+					output.append((secondBlock, numeredBlocks[block.Value+2]))
 		return output
 
 	def commitWay(self, way: list) -> None:
+		"""
+		Method insert way connection points to Board map.
+		When way is incorrect than method raise exception.
+
+		Parameters:
+			way (list): 2D list of connection points.
+		"""
 		firstElementValue = None
 		for step in range(len(way)):
 			firstElementValue = self.Board[way[step][0], way[step][1]].Value
@@ -284,17 +458,29 @@ class Solve:
 				and self.Board[way[wayNum][0], way[wayNum][1]].Value != firstElementValue+wayNum):
 				if way in self.Ways:
 					self.Ways.remove(way)
+				self.InvalidWays.add(set(way))
 				raise ValueError("Invalid way")
-		
 
 		for wayNum in range(len(way)):
 			self.Board[way[wayNum][0], way[wayNum][1]].Value = firstElementValue+wayNum
 
 	def addConnectionPointsToWays(self, connectionPoints: list) -> None:
+		"""
+		Method add connection points to Ways.
+
+		Schemats:
+			ConnectionPoint: It's point described in tuple as (<x>, <y>).
+
+		Parameters:
+			connectionPoints (list): List of connections. Schema: [[<ConnectionPoint>, <ConnectionPoint>], ...]
+		"""
 		self.Ways.extend([[(conn[0].x, conn[0].y), (conn[1].x, conn[1].y)] for conn in connectionPoints])
 		self.compressWays()
 
 	def compressWays(self) -> None:
+		"""
+		Method search connections between ways and connect them.
+		"""
 		changes = 1
 		while changes > 0:
 			changes = 0
@@ -320,6 +506,15 @@ class Solve:
 
 	@staticmethod
 	def _getWayCoordinatesIncrement(direction: int) -> tuple:
+		"""
+		Method return incrementation ways. Method describe what axis is growing, what is decreases and what is not changed.
+
+		Parameters:
+			direction (int): Integer value for direction.
+
+		Returns:
+			tuple: Incrementation ways in schema: (<x>, <y>).
+		"""
 		if direction == Block.DIRECTION_TOP:
 			x, y = 0, -1
 		elif direction == Block.DIRECTION_TOP_LEFT:
@@ -341,6 +536,16 @@ class Solve:
 		return (x, y)
 
 	def getAllBlocksOnWay(self, direction: int, startPoint: tuple) -> list:
+		"""
+		Method collect all blocks on way other block by location and direction.
+
+		Parameters:
+			direction (int): Integer value of direction.
+			startPoint (tuple): Coordinates of start point (not included in result).
+
+		Returns:
+			list: List of 'Block' objects.
+		"""
 		x, y = self._getWayCoordinatesIncrement(direction)
 
 		step = 1
@@ -354,6 +559,12 @@ class Solve:
 		return blocks
 
 	def getMapOfBlocksNotLinking(self) -> list:
+		"""
+		Method search all blocks that aren't linking and create matrix map with describing it.
+
+		Returns:
+			list: 2D matrix with bool values, what block are not linking (True) and what is (False).
+		"""
 		blocks = [ [True]*self.Board.Width for _ in range(self.Board.Height) ]
 
 		allBlocksInBoard = dict(self._allNumeredBlocksInBoard())
@@ -373,6 +584,12 @@ class Solve:
 		return blocks
 
 	def getMapOfBlocksNotLinked(self) -> list:
+		"""
+		Method search block that are not linked, and create matrix map when decribe it.
+
+		Returns:
+			list: 2D matrix taht contain bool values, if block is linked (False) and not linked (True).
+		"""
 		blocks = [ [True]*self.Board.Width for _ in range(self.Board.Height) ]
 
 		allUsedBlocksInBoard = dict(self._allNumeredBlocksInBoard())
@@ -392,6 +609,12 @@ class Solve:
 		return blocks
 
 	def _allNumeredBlocksInBoard(self) -> list:
+		"""
+		Method collect all block from Board map that value are not equal None.
+
+		Returns:
+			list: List with Block objects.
+		"""
 		allBlocksInBoard = []
 		for x in range(self.Board.Width):
 			for y in range(self.Board.Height):
