@@ -175,7 +175,8 @@ class Board:
 		return output
 
 	def __getitem__(self, pos: tuple) -> tuple:
-		return None if pos[0] >= self.Width or pos[1] >= self.Height else self._map[pos[1]][pos[0]]
+		return None if (pos[0] >= self.Width or pos[1] >= self.Height or
+			pos[0] < 0 or pos[1] < 0) else self._map[pos[1]][pos[0]]
 
 	def __len__(self) -> tuple:
 		return (self.Width, self.Height)
@@ -219,11 +220,7 @@ class Block:
 		self.y = y if type(y) == int else None
 		self.Direction = None if type(direction) != int or direction >= 8 else direction
 		self.Value = None if type(value) != int else value
-
-		if isEnd == True:
-			# Check Block value for probability of being end block.
-			assert math.sqrt(value) % 1 == 0
-			self._isEnd = True
+		self._isEnd = True if isEnd else False
 
 	@property
 	def isEnd(self) -> bool:
@@ -305,46 +302,31 @@ class Solve:
 		unlinking = self.getMapOfBlocksNotLinking()
 		unlinked = self.getMapOfBlocksNotLinked()
 		output = []
-		ol = None # Output Length
-		while ol != len(output):
-			ol = len(output)
-			for x in range(self.Board.Width):
-				for y in range(self.Board.Height):
-					if unlinking[y][x]:
-						block = self.Board[x, y]
-						inc = self._getWayCoordinatesIncrement(block.Direction) # INCrementation
-						
-						unlkd = [] # UNLinKeD
-						step = 1
-						while True:
-							wx, wy = (block.x+(inc[0]*step), block.y+(inc[1]*step))
-							if wx < 0 or wy < 0:
-								break
-							try:
-								if unlinked[wy][wx]:
-									if block.Value is not None and self.Board[wx, wy].Value is not None:
-										if block.Value + 1 == self.Board[wx, wy].Value:
-											unlkd = [self.Board[wx, wy]]
-									else:
-										isInWay = False
-										for way in self.Ways:
-											if way[0] == (wx,wy) and way[-1] == (x,y):
-												isInWay = True
-										if not isInWay:
-											unlkd.append(self.Board[wx, wy])
-							except IndexError:
-								break
-							else:
+		for x, y in ((x, y) for x in range(self.Board.Width) for y in range(self.Board.Height)):
+			if unlinking[y][x]:
+				block = self.Board[x, y]
+				blocksOnWay = set()
+				coordInc = self._getWayCoordinatesIncrement(block.Direction)
+				step = 1
+				while True:
+					blockOnWay = self.Board[x+(step*coordInc[0]), y+(step*coordInc[1])]
+					if blockOnWay is None:
+						break
+					if unlinked[blockOnWay.y][blockOnWay.x]:
+						if block.Value is not None and blockOnWay.Value is not None:
+							if block.Value+1 != blockOnWay.Value:
 								step += 1
-						if len(unlkd) == 1:
-							inWays = False
-							for way in self.Ways+output:
-								if (unlkd[0].x, unlkd[0].y) in way[1:]:
-									inWays = True
-									break
-							output.append((block, unlkd[0]))
-							unlinked[unlkd[0].y][unlkd[0].x] = False
-							unlinking[block.y][block.x] = False
+								continue
+						blocksOnWay.add(blockOnWay)
+					step += 1
+				if len(blocksOnWay) == 1:
+					blockOnWay = blocksOnWay.pop()
+					output.append([
+						(block.x, block.y),
+						(blockOnWay.x, blockOnWay.y)
+					])
+					unlinking[block.y][block.x] = False
+					unlinked[blockOnWay.y][blockOnWay.x] = False
 		return output
 
 	def checkOnlyOneLinking(self) -> list:
@@ -568,6 +550,7 @@ class Solve:
 		blocks = [ [True]*self.Board.Width for _ in range(self.Board.Height) ]
 
 		allBlocksInBoard = dict(self._allNumeredBlocksInBoard())
+		linkingWays = sum([way[0:-1] for way in self.Ways], [])
 
 		for x in range(self.Board.Width):
 			for y in range(self.Board.Height):
@@ -577,8 +560,7 @@ class Solve:
 				if self.Board[x, y].isEnd:
 					blocks[y][x] = False
 
-		for way in self.Ways:
-			for block in way[0:-1]:
+		for block in linkingWays:
 				blocks[block[1]][block[0]] = False
 
 		return blocks
