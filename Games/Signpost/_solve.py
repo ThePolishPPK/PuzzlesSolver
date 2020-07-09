@@ -337,46 +337,27 @@ class Solve:
 		Returns:
 			list: 2D list with connection Points.
 		"""
-		unLinking = self.getMapOfBlocksNotLinking()
-		unLinked = self.getMapOfBlocksNotLinked()
+		unlinking = self.getMapOfBlocksNotLinking()
+		unlinked = self.getMapOfBlocksNotLinked()
 		output = []
-		ol = None # Output Length
-		while ol != len(output):
-			ol = len(output)
-			for x in range(self.Board.Width):
-				for y in range(self.Board.Height):
-					if unLinked[y][x]:
-						block = self.Board[x, y]
-						unlking = [] # UNLinKING
-						for direction in range(8):
-							inc = self._getWayCoordinatesIncrement(direction)
-							step = 1
-							while True:
-								if type(unlking) == Block:
-									break
-								wx, wy = (x+(step*inc[0]), y+(step*inc[1]))
-								if wx < 0 or wy < 0:
-									break
-								try:
-									if unLinking[wy][wx]:
-										b = self.Board[wx, wy]
-										
-										if self._getWayCoordinatesIncrement(b.Direction) == (-inc[0], -inc[1]):
-											if block.Value is not None and b.Value is not None:
-												if block.Value-1 == b.Value:
-													unlking = b
-											else:
-												unlking.append(b)
-								except IndexError:
-									break
-								else:
-									step += 1
-						if type(unlking) == Block:
-							unlking = [unlking]
-						if len(unlking) == 1:
-							output.append((unlking[0], block))
-							unLinking[unlking[0].y][unlking[0].x] = False
-							unLinked[block.y][block.x] = False
+		for x, y in ((x,y) for x in range(self.Board.Width) for y in range(self.Board.Height)):
+			if unlinked[y][x]:
+				linking = []
+				block = self.Board[x, y]
+				for direction in range(8):
+					linkingBlocks = self.getAllBlocksOnWay(direction, (x, y))
+					for linkingBlock in linkingBlocks:
+						if not linkingBlock.isEnd and unlinking[linkingBlock.y][linkingBlock.x]:
+							if block in self.getAllBlocksOnWay(linkingBlock.Direction, (linkingBlock.x, linkingBlock.y)):
+								if block.Value is not None and linkingBlock.Value is not None:
+									if block.Value - 1 != linkingBlock.Value:
+										continue
+								linking.append(linkingBlock)
+				if len(linking) == 1:
+					output.append([
+						(linking[0].x, linking[0].y),
+						(block.x, block.y)
+					])
 		return output
 
 	def checkOneBlockOnWay(self) -> list:

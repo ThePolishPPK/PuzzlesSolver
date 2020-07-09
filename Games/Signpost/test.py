@@ -156,19 +156,14 @@ class Test_SolveMethods(unittest.TestCase):
 	def test_checkOnlyOneLinking_noWays(self):
 		board = Board.parse(TestLinks1)
 		self.assertEqual(
-			set(Solve(board).checkOnlyOneLinking()),
-			{
-				(board[2,0], board[2,1]),
-				(board[2,1], board[0,1]),
-				(board[0,1], board[0,2]),
-				(board[0,2], board[2,2]),
-				(board[2,2], board[2,3]),
-				(board[2,3], board[3,2]),
-				(board[3,2], board[3,1]),
-				(board[3,1], board[1,3]),
-				(board[1,3], board[1,2]),
-				(board[1,2], board[3,0]),
-			}
+			sorted(tuple( tuple(line) for line in Solve(board).checkOnlyOneLinking() )),
+			sorted((
+				((2,1), (0,1)),
+				((0,1), (0,2)),
+				((0,2), (2,2)),
+				((3,2), (3,1)),
+				((3,1), (1,3))
+			))
 		)
 
 	def test_checkOnlyOneLinking_withWays(self):
@@ -179,16 +174,15 @@ class Test_SolveMethods(unittest.TestCase):
 			[(2,2), (2,3)],
 		]
 		self.assertEqual(
-			set(solver.checkOnlyOneLinking()),
-			{
-				(board[2,0], board[2,1]),
-				(board[2,1], board[0,1]),
-				(board[0,1], board[0,2]),
-				(board[0,2], board[2,2]),
-				(board[2,3], board[3,2]),
-				(board[3,2], board[3,1]),
-				(board[3,1], board[1,3]),
-			}
+			sorted(tuple( tuple(line) for line in solver.checkOnlyOneLinking() )),
+			sorted((
+				((2,0), (2,1)),
+				((2,1), (0,1)),
+				((0,1), (0,2)),
+				((0,2), (2,2)),
+				((3,2), (3,1)),
+				((3,1), (1,3)),
+			))
 		)
 
 	def test_commitWay(self):
