@@ -368,28 +368,31 @@ class Solve:
 		Returns:
 			list: 2D list with connection points.
 		"""
-		data = []
-		numeredBlocks = dict( (block[0], self.Board[block[1][0], block[1][1]]) for block in self._allNumeredBlocksInBoard() )
-		num = 0
-		for block in numeredBlocks.values():
-			if (block.Value+2 in numeredBlocks.keys()
-				and block.Value+1 not in numeredBlocks.keys()):
-				for bl in self.getAllBlocksOnWay(block.Direction, (block.x, block.y)):
-					if numeredBlocks[block.Value+2] in self.getAllBlocksOnWay(bl.Direction, (bl.x, bl.y)):
-						data.append((block, bl))
-
 		output = []
-		for block in list(set(x[0] for x in data)):
-			count = 0
-			secondBlock = None
-			for b in data:
-				if b[0] == block:
-					secondBlock = b[1]
-					count += 1
-			if count == 1:
-				if secondBlock.Value is None:
-					output.append((block, secondBlock))
-					output.append((secondBlock, numeredBlocks[block.Value+2]))
+		unlinking = self.getMapOfBlocksNotLinking()
+		unlinked = self.getMapOfBlocksNotLinked()
+		numeredBlocks = self._allNumeredBlocksInBoard()
+		blocksByNumber = dict((block.Value, block) for block in numeredBlocks)
+		for block in numeredBlocks:
+			if unlinking[block.y][block.x]:
+				if block.Value + 2 in blocksByNumber.keys() and block.Value + 1 not in blocksByNumber.keys():
+					block3 = blocksByNumber[block.Value + 2]
+					if unlinked[block3.y][block3.x]:
+						possibleBlocks2 = []
+						for block2 in self.getAllBlocksOnWay(block.Direction, (block.x, block.y)):
+							if unlinking[block2.y][block2.x] and unlinked[block2.y][block2.x]:
+								if block3 in self.getAllBlocksOnWay(block2.Direction, (block2.x, block2.y)):
+									possibleBlocks2.append(block2)
+						if len(possibleBlocks2) == 1:
+							block2 = possibleBlocks2[0]
+							output.append([
+								(block.x, block.y),
+								(block2.x, block2.y)
+							])
+							output.append([
+								(block2.x, block2.y),
+								(block3.x, block3.y)
+							])
 		return output
 
 	def commitWay(self, way: list) -> None:
@@ -530,7 +533,7 @@ class Solve:
 		"""
 		blocks = [ [True]*self.Board.Width for _ in range(self.Board.Height) ]
 
-		allBlocksInBoard = dict(self._allNumeredBlocksInBoard())
+		allBlocksInBoard = dict(((block.Value, (block.x, block.y)) for block in self._allNumeredBlocksInBoard()))
 		linkingWays = sum([way[0:-1] for way in self.Ways], [])
 
 		for x in range(self.Board.Width):
@@ -555,7 +558,7 @@ class Solve:
 		"""
 		blocks = [ [True]*self.Board.Width for _ in range(self.Board.Height) ]
 
-		allUsedBlocksInBoard = dict(self._allNumeredBlocksInBoard())
+		allUsedBlocksInBoard = dict(((block.Value, (block.x, block.y)) for block in self._allNumeredBlocksInBoard()))
 		for block in allUsedBlocksInBoard.keys():
 			if block-1 in allUsedBlocksInBoard.keys():
 				blocks[allUsedBlocksInBoard[block][1]][allUsedBlocksInBoard[block][0]] = False
@@ -582,5 +585,5 @@ class Solve:
 		for x in range(self.Board.Width):
 			for y in range(self.Board.Height):
 				if self.Board[x, y].Value != None:
-					allBlocksInBoard.append((self.Board[x, y].Value, (x, y)))
+					allBlocksInBoard.append(self.Board[x, y])
 		return allBlocksInBoard

@@ -244,11 +244,11 @@ class Test_SolveMethods(unittest.TestCase):
 	def test_checkOneBlockOnWay(self):
 		board = Board.parse("5x5:1hda12ea14abegaac20a6daa4aafaaaac16a")
 		self.assertEqual(
-			set(Solve(board).checkOneBlockOnWay()),
-			{
-				(board[3,0], board[3,1]),
-				(board[3,1], board[0,1]),
-			}
+			sorted(tuple(tuple(line) for line in Solve(board).checkOneBlockOnWay() )),
+			sorted((
+				((3,0), (3,1)),
+				((3,1), (0,1))
+			))
 		)
 
 	def test_solve(self):
