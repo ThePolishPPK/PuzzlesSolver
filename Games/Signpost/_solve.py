@@ -268,11 +268,15 @@ class Solve:
 		Returns:
 			tuple: 2D matrix of block Values from solved board.
 		"""
-		changes = 700
-		while changes != 0:
+		alreadyExisedChanges = set()
+		changes = 0
+		while changes != hash((self.Board._map, tuple(tuple(l) for l in self.Ways))):
 			
-			changes -= 1
-			
+			changes = hash((self.Board._map, tuple(tuple(l) for l in self.Ways)))
+			if changes in alreadyExisedChanges:
+				break
+			else:
+				alreadyExisedChanges.add(changes)
 			onlyOneLinking = self.checkOnlyOneLinking()
 			self.addConnectionPointsToWays(onlyOneLinking)
 			
@@ -410,14 +414,14 @@ class Solve:
 				firstElementValue -= step
 				break
 		if type(firstElementValue) is not int or firstElementValue < 1:
-			if way in self.Ways:
-				self.Ways.remove(way)
 			raise ValueError("Cannot find any correct value in this Way!")
 		nums = self._allNumeredBlocksInBoard()
 		for wayNum in range(len(way)):
 			for numeredBlock in nums:
-				if (firstElementValue+wayNum == numeredBlock[0]
-					and tuple(numeredBlock[1]) != tuple(way[wayNum][0:2])):
+				if (firstElementValue+wayNum == numeredBlock.Value
+					and (numeredBlock.x,numeredBlock.y) != tuple(way[wayNum][0:2])):
+					if way in self.Ways:
+						self.Ways.remove(way)
 					raise ValueError("Cannot repeat value!")
 				
 			if (self.Board[way[wayNum][0], way[wayNum][1]].Value is not None
@@ -440,7 +444,7 @@ class Solve:
 		Parameters:
 			connectionPoints (list): List of connections. Schema: [[<ConnectionPoint>, <ConnectionPoint>], ...]
 		"""
-		self.Ways.extend([[(conn[0].x, conn[0].y), (conn[1].x, conn[1].y)] for conn in connectionPoints])
+		self.Ways.extend(connectionPoints)
 		self.compressWays()
 
 	def compressWays(self) -> None:

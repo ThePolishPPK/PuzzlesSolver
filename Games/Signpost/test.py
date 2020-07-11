@@ -207,9 +207,9 @@ class Test_SolveMethods(unittest.TestCase):
 		board = Board.parse(TestLinks1)
 		solver = Solve(board)
 		points = [ # No logic connection, it's only ways
-			(board[1,2], board[2,3]),
-			(board[0,1], board[3,1]),
-			(board[3,1], board[1,2])
+			[(1,2), (2,3)],
+			[(0,1), (3,1)],
+			[(3,1), (1,2)]
 		]
 		solver.addConnectionPointsToWays(points)
 		self.assertEqual(
@@ -223,9 +223,9 @@ class Test_SolveMethods(unittest.TestCase):
 		board = Board.parse(TestLinks1)
 		solver = Solve(board)
 		points = [
-			(board[1,2], board[1,1]),
-			(board[0,1], board[2,2]),
-			(board[3,3], board[2,0]),
+			[(1,2), (1,1)],
+			[(0,1), (2,2)],
+			[(3,3), (2,0)],
 		]
 		solver.Ways = [
 			[(1,3), (2,3), (1,0), (0,1)],
