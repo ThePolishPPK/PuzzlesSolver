@@ -1,4 +1,4 @@
-import math, json, re, pdb
+import math, json, re, copy
 
 class Board:
 	"""
@@ -112,15 +112,17 @@ class Board:
 			line = []
 			for x in range(width):
 				block = next(blocks)
+				value = int(block.group("Value")) if block.group("Value") != "" else None
 				line.append(Block(
 					x,
 					y,
-					value=int(block.group("Value")) if block.group("Value") != "" else None,
-					direction=directions[block.group("Direction").lower()]
+					value=value,
+					direction=directions[block.group("Direction").lower()],
+					isEnd=(value == width*height)
 				))
-			boardMap.append(line)
+			boardMap.append(tuple(line))
 		board = cls(width, height)
-		board._map = boardMap
+		board._map = tuple(boardMap)
 		return board
 
 	@classmethod
@@ -173,6 +175,47 @@ class Board:
 				output += "" if self[x,y].Value is None else str(self[x,y].Value)
 				output += chr(97 + (0 if self[x,y].Direction is None else self[x,y].Direction))
 		return output
+
+	def isValid(self) -> bool:
+		"""
+		Method check every block and correct connections.
+
+		Returns:
+			bool: Status about board.
+		"""
+		blocksByValues = dict((b.Value, (b.x, b.y)) for b in sum(self._map, ()))
+		try:
+			for n in range(1,self.Width*self.Height):
+				block = blocksByValues[n]
+				next = blocksByValues[n+1]
+				inc = Solve._getWayCoordinatesIncrement(self._map[block[1]][block[0]].Direction)
+				if inc[0] == 0:
+					if next[0]-block[0] != 0:
+						return False
+				else:
+					if (block[0]-next[0])*inc[0] > 0:
+						return False
+				if inc[1] == 0:
+					if next[1]-block[1] != 0:
+						return False
+				else:
+					if (block[1]-next[1])*inc[1] > 0:
+						return False
+				if inc[0] != 0 and inc[1] != 0:
+					if (block[1]-next[1])*inc[1] != (block[0]-next[0])*inc[0]:
+						return False
+		except KeyError:
+			return False
+		return True
+
+	def copy(self) -> 'Board':
+		"""
+		Method create copy of self object.
+
+		Returns:
+			Board: Copy of Board object.
+		"""
+		return Board.parse(self.exportToGameID())
 
 	def __getitem__(self, pos: tuple) -> tuple:
 		return None if (pos[0] >= self.Width or pos[1] >= self.Height or
@@ -271,7 +314,6 @@ class Solve:
 		alreadyExisedChanges = set()
 		changes = 0
 		while changes != hash((self.Board._map, tuple(tuple(l) for l in self.Ways))):
-			
 			changes = hash((self.Board._map, tuple(tuple(l) for l in self.Ways)))
 			if changes in alreadyExisedChanges:
 				break
@@ -279,13 +321,13 @@ class Solve:
 				alreadyExisedChanges.add(changes)
 			onlyOneLinking = self.checkOnlyOneLinking()
 			self.addConnectionPointsToWays(onlyOneLinking)
-			
+
 			onlyOneMove = self.checkOnlyOneMove()
 			self.addConnectionPointsToWays(onlyOneMove)
-			
+
 			onlyOneOnWay = self.checkOneBlockOnWay()
 			self.addConnectionPointsToWays(onlyOneOnWay)
-			
+
 			for way in self.Ways:
 				try:
 					self.commitWay(way)
@@ -293,7 +335,9 @@ class Solve:
 					pass
 				else:
 					self.Ways.remove(way)
-		return self.Board.getValuesMatrix()
+		if None in sum(self.Board.getValuesMatrix(), ()):
+			self = self.randomSetOneConnection()
+		return self
 
 	def checkOnlyOneMove(self) -> list:
 		"""
@@ -399,6 +443,49 @@ class Solve:
 							])
 		return output
 
+	def randomSetOneConnection(self) -> list:
+		"""
+		Method create copy of self object and create random link.
+		If board are solved with that and other random links return values matrix else None.
+
+		Returns:
+			list: 2D Values matrix.
+		"""
+		blockToRandom = {}
+		unlinking = self.getMapOfBlocksNotLinking()
+		unlinked = self.getMapOfBlocksNotLinked()
+
+		#Search unlinking points and them possible blocks to connect
+		for x, y in ((x,y) for x in range(self.Board.Width) for y in range(self.Board.Height)):
+			if unlinking[y][x]:
+				block = self.Board[x,y]
+				blockToRandom[block] = []
+				for blockToConnect in self.getAllBlocksOnWay(block.Direction, (x,y)):
+					if unlinked[blockToConnect.y][blockToConnect.x]:
+						blockToRandom[block].append(blockToConnect)
+		if len(tuple(blockToRandom.items())) == 0:
+			return self
+
+		#Select block with the lowest count of connections
+		block = tuple(blockToRandom.items())[0][0]
+		for bl in blockToRandom.items():
+			if len(blockToRandom[block]) > len(bl[1]) and len(bl[1]) > 1:
+				block = bl[0]
+
+		#Clone Solve object, insert link and solve
+		randomed = []
+		for connect in blockToRandom[block]:
+			solver = Solve(self.Board.copy())
+			solver.Ways = copy.deepcopy(self.Ways)
+			solver.Ways.append([(block.x, block.y), (connect.x, connect.y)])
+			randomed.append(solver.solve())
+			if randomed[-1].Board.isValid():
+				break
+		for solv in randomed:
+			if solv.Board.isValid():
+				return solv
+		return self
+
 	def commitWay(self, way: list) -> None:
 		"""
 		Method insert way connection points to Board map.
@@ -420,14 +507,10 @@ class Solve:
 			for numeredBlock in nums:
 				if (firstElementValue+wayNum == numeredBlock.Value
 					and (numeredBlock.x,numeredBlock.y) != tuple(way[wayNum][0:2])):
-					if way in self.Ways:
-						self.Ways.remove(way)
 					raise ValueError("Cannot repeat value!")
 				
 			if (self.Board[way[wayNum][0], way[wayNum][1]].Value is not None
 				and self.Board[way[wayNum][0], way[wayNum][1]].Value != firstElementValue+wayNum):
-				if way in self.Ways:
-					self.Ways.remove(way)
 				self.InvalidWays.add(set(way))
 				raise ValueError("Invalid way")
 
