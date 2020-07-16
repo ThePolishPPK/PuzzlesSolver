@@ -1,5 +1,6 @@
 # Puzzles solver
 
+#### [Puzzles](https://www.chiark.greenend.org.uk/~sgtatham/puzzles/)
 #### [Puzzles (GitHub)](https://github.com/chrisboyle/sgtpuzzles)
 #### [Puzzles (Fdroid)](https://f-droid.org/packages/name.boyle.chris.sgtpuzzles/)
 
@@ -122,8 +123,8 @@ This app is created to solve Puzzles in optimal time.
 - [ ] Solve
 - [ ] Description of solution
 #### Signpost
-- [ ] Test
-- [ ] Solve
+- [x] Test
+- [x] Solve
 - [ ] Description of solution
 #### Singles
 - [ ] Test

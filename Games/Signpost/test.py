@@ -1,6 +1,6 @@
 from _solve import Board, Block, Solve
 from _test_maps import *
-import unittest, pdb, pudb
+import unittest
 
 
 
@@ -290,7 +290,7 @@ class Test_SolveMethods(unittest.TestCase):
 		]
 
 		for data in dataSet:
-			solution = Solve(Board.parse(data[0])).solve().Board.getValuesMatrix()
+			solution = Solve(Board.parse(data[0])).solve()
 			for y in range(len(data[1])):
 				for x in range(len(data[1][y])):
 					self.assertEqual(

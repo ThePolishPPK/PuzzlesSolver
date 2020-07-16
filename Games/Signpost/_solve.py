@@ -306,10 +306,22 @@ class Solve:
 
 	def solve(self) -> list:
 		"""
-		Method execute all operations to solve game.
+		Method solve game.
 
 		Returns:
 			tuple: 2D matrix of block Values from solved board.
+		"""
+		solvedObject = self.getSolvedObject()
+		self.Board._map = solvedObject.Board._map
+		self.Ways = solvedObject.Ways
+		return self.Board.getValuesMatrix()
+
+	def getSolvedObject(self) -> 'Solve':
+		"""
+		Method make moves to solve game.
+
+		Returns:
+			Solve: Solve object with solved board.
 		"""
 		alreadyExisedChanges = set()
 		changes = 0
@@ -478,7 +490,7 @@ class Solve:
 			solver = Solve(self.Board.copy())
 			solver.Ways = copy.deepcopy(self.Ways)
 			solver.Ways.append([(block.x, block.y), (connect.x, connect.y)])
-			randomed.append(solver.solve())
+			randomed.append(solver.getSolvedObject())
 			if randomed[-1].Board.isValid():
 				break
 		for solv in randomed:

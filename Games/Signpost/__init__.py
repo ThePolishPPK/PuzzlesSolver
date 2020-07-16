@@ -1,3 +1,3 @@
-from _solve import Board, Block
+from _solve import Board, Block, Solve
 
-__all__ = ["Board", "Block"]
+__all__ = ["Board", "Block", "Solve"]
