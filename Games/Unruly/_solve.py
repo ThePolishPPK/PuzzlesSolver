@@ -1,3 +1,5 @@
+import re
+
 class Board:
 	"""
 	Class containing data about board and blocks on them.
@@ -16,8 +18,14 @@ class Board:
 		Parameters:
 			width (int): Board width.
 			height (int): Board height.
+			uniqueInX (int): Count of block one color in row. (default: width//2)
+			uniqueInY (int): Count of block one color in column. (default: height//2)
 		"""
-		pass
+		self.Width = width
+		self.Height = height
+		self.UniqueInX = uniqueInX if type(uniqueInX) == int else self.Width // 2
+		self.UniqueInY = uniqueInY if type(uniqueInY) == int else self.Height // 2
+		self._map = [ [None]*self.Width for _ in range(self.Height) ]
 
 	@classmethod
 	def parse(cls, data: str) -> 'Board':
@@ -30,7 +38,8 @@ class Board:
 		Returns:
 			Board: Board with map created by data parameter.
 		"""
-		pass
+		if re.search(r"^[0-9]+x[0-9]+:[a-zA-Z]+$", data) is not None:
+			return cls._parseGameID(data)
 
 	@classmethod
 	def _parseGameID(cls, gameID: str) -> 'Board':
@@ -43,7 +52,35 @@ class Board:
 		Returns:
 			Board: Board object with map defined by gameID parameter.
 		"""
-		pass
+		data = re.search(r"^(?P<w>[0-9]+)x(?P<h>[0-9]+):(?P<GID>[a-zA-Z]+)$", gameID)
+		board = cls(
+			int(data.group("w")),
+			int(data.group("h"))
+		)
+		offset = -1
+		for char in data.group("GID"):
+			blockType = Block.BLACK if char == char.upper() else Block.WHITE
+			offset += ord(char.upper()) - 64
+
+			if offset >= board.Width * board.Height:
+				break
+
+			block = Block(
+				x=offset % board.Width,
+				y=offset // board.Width,
+				blockType=blockType
+			)
+			board._map[block.y][block.x] = block
+
+		for x, y in ((x,y) for x in range(board.Width) for y in range(board.Height)):
+			if board._map[y][x] is None:
+				board._map[y][x] = Block(
+					x=x,
+					y=y,
+					blockType=Block.EMPTY
+				)
+
+		return board
 
 	def exportToGameID(self) -> str:
 		"""
@@ -52,7 +89,21 @@ class Board:
 		Returns:
 			str: GameID Data.
 		"""
-		pass
+		gameID = ""
+		offset = 0
+		for y in range(self.Height):
+			for x in range(self.Width):
+				if self._map[y][x].Type != Block.EMPTY:
+					char = chr(offset+65)
+					gameID = char.lower() if self._map[y][x].Type == Block.WHITE else char.upper()
+					offset = 0
+				else:
+					offset += 1
+		return "{}x{}:{}".format(
+			str(self.Width),
+			str(self.Height),
+			gameID
+		)
 
 	def copy(self) -> 'Board':
 		"""
@@ -61,10 +112,27 @@ class Board:
 		Returns:
 			Board: Cloned Board object.
 		"""
-		pass
+		board = Board(
+			self.Width,
+			self.Height,
+			self.UniqueInX,
+			self.UniqueInY
+		)
+		for x, y in ((x,y) for x in range(self.Width) for y in range(self.Height)):
+			board._map[y][x] = Block(
+				x=x,
+				y=y,
+				blockType=self._map[y][x].Type
+			)
+
+		return board
 
 	def __getitem__(self, location: tuple) -> 'Block':
-		pass
+		if (location[0] not in range(self.Width)
+			or location[1] not in range(self.Height)):
+			raise IndexError("That block doesn't exist!")
+		else:
+			return self._map[location[1]][location[0]]
 
 class Block:
 	"""
@@ -92,7 +160,13 @@ class Block:
 			y (int): Block location on y axis.
 			blockType (int): Block type. (default: 0)
 		"""
-		pass
+		self.x = x
+		self.y = y
+		self.Type = blockType
 
 	def __repr__(self) -> str:
-		pass
+		return "<Block Type={} x={} y={}>".format(
+			"Black" if self.Type == Block.BLACK else ("WHITE" if self.Type == Block.WHITE else ("EMPTY" if self.Type == Block.EMPTY else "undefined")),
+			self.x,
+			self.y
+		)
