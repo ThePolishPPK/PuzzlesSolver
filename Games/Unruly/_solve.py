@@ -10,8 +10,9 @@ class Board:
 		Height (int): Count of blocks in Y axis.
 		UniqueInX (int): Count of one color blocks in row.
 		UniqueInY (int): Count of one color blocks in column.
+		UniqueRowsAndColumns (bool): Define in rules to check rows and columns.
 	"""
-	def __init__(self, width: int, height: int, uniqueInX: int = None, uniqueInY: int = None) -> None:
+	def __init__(self, width: int, height: int, uniqueInX: int = None, uniqueInY: int = None, uniqueRowsAndColumns: bool = False) -> None:
 		"""
 		Constructor for Board class.
 
@@ -20,11 +21,13 @@ class Board:
 			height (int): Board height.
 			uniqueInX (int): Count of block one color in row. (default: width//2)
 			uniqueInY (int): Count of block one color in column. (default: height//2)
+			uniqueRowsAndColumns (bool): Rule config, define checking unique rows and columns. (default: False)
 		"""
 		self.Width = width
 		self.Height = height
 		self.UniqueInX = uniqueInX if type(uniqueInX) == int else self.Width // 2
 		self.UniqueInY = uniqueInY if type(uniqueInY) == int else self.Height // 2
+		self.UniqueRowsAndColumns = uniqueRowsAndColumns
 		self._map = [ [None]*self.Width for _ in range(self.Height) ]
 
 	@classmethod
@@ -95,15 +98,63 @@ class Board:
 			for x in range(self.Width):
 				if self._map[y][x].Type != Block.EMPTY:
 					char = chr(offset+65)
-					gameID = char.lower() if self._map[y][x].Type == Block.WHITE else char.upper()
+					gameID += char.lower() if self._map[y][x].Type == Block.WHITE else char.upper()
 					offset = 0
 				else:
 					offset += 1
+		gameID += chr(offset + 97)
 		return "{}x{}:{}".format(
 			str(self.Width),
 			str(self.Height),
 			gameID
 		)
+
+	def exportToBinaryMatrix(self) -> list:
+		"""
+		Method create 2D matrix and fill them with 0, 1 and None values.
+		0 - White
+		1 - Black
+		None - Empty
+
+		Returns:
+			list: 2D matrix with blocks types.
+		"""
+		board = [[None]*self.Width for _ in range(self.Height)]
+		for x,y in ((x,y) for x in range(self.Width) for y in range(self.Height)):
+			if self._map[y][x].Type != Block.EMPTY:
+				board[y][x] = 0 if self._map[y][x].Type == Block.WHITE else 1
+		return board
+
+	def isValid(self) -> bool:
+		"""
+		Method check Board with game rules.
+
+		Returns:
+			bool: True if board is valid else False
+		"""
+		board = self.exportToBinaryMatrix()
+
+		# Check block counts in row
+		for y in range(self.Height):
+			if (board[y].count(1) > self.UniqueInX or
+				board[y].count(0) > self.UniqueInX):
+				return False
+
+		# Check block counts in column
+		for y in ([board[y][x] for y in range(self.Height)] for x in range(self.Width)):
+			if (y.count(1) > self.UniqueInY or
+				y.count(0) > self.UniqueInY):
+				return False
+
+		if self.UniqueRowsAndColumns:
+			for row in (x for x in board if None not in board):
+				if board.count(row) > 1:
+					return False
+			columns = list([board[y][x] for y in range(self.Height)] for x in range(self.Width))
+			for column in (y for y in columns if None not in y):
+				if columns.count(column) > 1:
+					return False
+		return True
 
 	def copy(self) -> 'Board':
 		"""
