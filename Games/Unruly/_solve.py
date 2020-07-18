@@ -221,3 +221,62 @@ class Block:
 			self.x,
 			self.y
 		)
+
+
+class Solve:
+	"""
+	Class make all algorithm steps to solve board.
+	"""
+	def __init__(self, board: Board) -> None:
+		"""
+		Constructor for 'Solve' class.
+
+		Parameters:
+			board (Board): Board object what shoud be solved.
+		"""
+		pass
+
+	def solve(self) -> list:
+		"""
+		Method solve board and create binary matrix representing color of every block.
+
+		Returns:
+			list: 2D matrix with ints representing blocks color: 0 - White, 1 - Black.
+		"""
+		pass
+
+	def addWallsForDublesInLine(self) -> list:
+		"""
+		Method search dubled blocks in one color and check existing his ways.
+
+		Returns:
+			list: List of coordinates where shoud be seted blocks and them color eg. [(3,5,0),(5,6,1)]
+		"""
+		pass
+
+	def checkOutOfBlockOneColorInLine(self) -> list:
+		"""
+		Method count blocks in line and check limits. If count of blocks are end, then other empty blocks fill with second color.
+
+		Returns:
+			list: List of coordinates where shoud be seted blocks and them color eg. [(3,5,0),(5,6,1)]
+		"""
+		pass
+
+	def checkEmptyBlockBetweenTwoInLine(self) -> list:
+		"""
+		Method search two blocks in line with this same color and one empty block between them.
+
+		Returns:
+			list: List of coordinates where shoud be seted blocks and them color eg. [(3,5,0),(5,6,1)]
+		"""
+		pass
+
+	def radomizeOneBlock(self) -> 'Board':
+		"""
+		Method clone Board and set random block with random color.
+
+		Returns:
+			Board: Board object with correct blocks.
+		"""
+		pass
