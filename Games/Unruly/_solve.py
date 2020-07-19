@@ -178,6 +178,15 @@ class Board:
 
 		return board
 
+	@property
+	def _invertedMap(self) -> list:
+		"""
+		Method create copy of map (blocks aren't copied) in other direction.
+		Returns:
+			list: 2D matrix with inverted map.
+		"""
+		return [[self._map[y][x] for y in range(self.Height)] for x in range(self.Width)]
+
 	def __getitem__(self, location: tuple) -> 'Block':
 		if (location[0] not in range(self.Width)
 			or location[1] not in range(self.Height)):
@@ -226,6 +235,9 @@ class Block:
 class Solve:
 	"""
 	Class make all algorithm steps to solve board.
+
+	Attributes:
+		Board (Board): Board object with map to solve.
 	"""
 	def __init__(self, board: Board) -> None:
 		"""
@@ -234,7 +246,7 @@ class Solve:
 		Parameters:
 			board (Board): Board object what shoud be solved.
 		"""
-		pass
+		self.Board = board
 
 	def solve(self) -> list:
 		"""
@@ -252,7 +264,49 @@ class Solve:
 		Returns:
 			list: List of coordinates where shoud be seted blocks and them color eg. [(3,5,0),(5,6,1)]
 		"""
-		pass
+		output = []
+
+		# For rows
+		for row in self.Board._map:
+			lastType = Block.EMPTY
+			for x in range(self.Board.Width):
+				if row[x].Type == lastType and lastType is not Block.EMPTY:
+					if len(row) > x+1 and row[x+1].Type == Block.EMPTY:
+						output.append((
+							row[x].x+1,
+							row[x].y,
+							1 if lastType == Block.WHITE else 0
+						))
+					if x > 1 and row[x-2].Type == Block.EMPTY:
+						output.append((
+							row[x].x-2,
+							row[x].y,
+							1 if lastType == Block.WHITE else 0
+						))
+				else:
+					lastType = row[x].Type
+
+		#For columns
+		for column in self.Board._invertedMap:
+			lastType = Block.EMPTY
+			for y in range(self.Board.Height):
+				if column[y].Type == lastType and lastType is not Block.EMPTY:
+					if len(column) > y+1 and column[y+1].Type == Block.EMPTY:
+						output.append((
+							column[y].x,
+							column[y].y+1,
+							1 if lastType == Block.WHITE else 0
+						))
+					if y > 1 and column[y-2].Type == Block.EMPTY:
+						output.append((
+							column[y].x,
+							column[y].y-2,
+							1 if lastType == Block.WHITE else 0
+						))
+				else:
+					lastType = column[y].Type
+
+		return output
 
 	def checkOutOfBlockOneColorInLine(self) -> list:
 		"""
@@ -270,7 +324,33 @@ class Solve:
 		Returns:
 			list: List of coordinates where shoud be seted blocks and them color eg. [(3,5,0),(5,6,1)]
 		"""
-		pass
+		output = []
+
+		#For row
+		for row in self.Board._map:
+			for x in range(self.Board.Width-2):
+				if (row[x].Type == row[x+2].Type and
+					row[x].Type is not Block.EMPTY and
+					row[x+1].Type is Block.EMPTY):
+					output.append((
+						row[x+1].x,
+						row[x+1].y,
+						1 if row[x].Type == Block.WHITE else 0
+					))
+
+		#For column
+		for column in self.Board._invertedMap:
+			for y in range(self.Board.Height-2):
+				if (column[y].Type == column[y+2].Type and
+					column[y].Type is not Block.EMPTY and
+					column[y+1].Type is Block.EMPTY):
+					output.append((
+						column[y+1].x,
+						column[y+1].y,
+						1 if column[y].Type == Block.WHITE else 0
+					))
+
+		return output
 
 	def radomizeOneBlock(self) -> 'Board':
 		"""

@@ -1,5 +1,5 @@
-import unittest
-from _solve import Board, Block
+import unittest, pudb
+from _solve import Board, Block, Solve
 
 class Test_Board(unittest.TestCase):
 	def test_parseGameID(self):
@@ -44,9 +44,66 @@ class Test_Board(unittest.TestCase):
 		)
 
 
+class Test_Solve(unittest.TestCase):
+	def test_addWallsForDublesInLine(self):
+		self.assertEqual(
+			sorted(tuple(Solve(Board.parse("8x8:ECCCBdccbdgcFbcDEc")).addWallsForDublesInLine())),
+			sorted((
+				(3, 1, 1),
+				(3, 4, 1),
+				(1, 4, 1),
+				(1, 7, 1),
+				(7, 2, 0)
+			))
+		)
+		self.assertEqual(
+			sorted(tuple(Solve(Board.parse("14x14:EbCejbhdKAHaMcCDbFgFgcBgbAcKaCdbeAGBAGAJCgab")).addWallsForDublesInLine())),
+			sorted((
+				(2, 3, 0),
+				(2, 6, 0),
+				(0, 9, 1),
+				(0, 12, 1),
+				(4, 11, 0),
+				(3, 12, 0),
+				(6, 12, 0),
+				(6, 3, 0),
+				(9, 3, 0),
+				(10, 0, 1),
+				(10, 3, 1),
+				(9, 11, 0),
+				(12, 11, 0),
+				(12, 6, 1),
+				(12, 9, 1),
+				(13, 7, 0),
+				(13, 10, 0),
+				(10, 13, 1),
+				(13, 13, 1)
+			))
+		)
 
-
-
+	def test_checkEmptyBlockBetweenTwoInLine(self):
+		self.assertEqual(
+			sorted(tuple(Solve(Board.parse("10x10:aaDGbEAfCAaNabbbbCbBbbCoBBFcca")).checkEmptyBlockBetweenTwoInLine())),
+			sorted((
+				(1, 5, 1),
+				(3, 5, 1),
+				(4, 6, 1),
+				(3, 7, 1),
+				(7, 4, 1),
+				(6, 3, 1),
+				(6, 8, 0)
+			))
+		)
+		self.assertEqual(
+			sorted(tuple(Solve(Board.parse("10x10:bAdbJBlcaCACGbfGAdlCBedac")).checkEmptyBlockBetweenTwoInLine())),
+			sorted((
+				(0, 3, 0),
+				(2, 4, 1),
+				(7, 0, 1),
+				(6, 8, 0),
+				(5, 7, 0)
+			))
+		)
 
 
 
