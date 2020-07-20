@@ -1,4 +1,4 @@
-import re
+import re, random
 
 class Board:
 	"""
@@ -255,7 +255,48 @@ class Solve:
 		Returns:
 			list: 2D matrix with ints representing blocks color: 0 - White, 1 - Black.
 		"""
-		pass
+		board = self.solveBoard()
+		output = board.exportToBinaryMatrix()
+		if None in sum(output, []):
+			print("Sorry, I cannot solve this Board.")
+		return output
+
+	def solveBoard(self) -> 'Board':
+		"""
+		Method solve Board.
+
+		Returns:
+			Board: Solved Board object.
+		"""
+		changes = 1
+		while changes > 0:
+			changes = 0
+
+			addWalls = self.addWallsForDublesInLine()
+			self.appendBlocks(addWalls)
+			changes += len(addWalls)
+
+			checkEmpty = self.checkEmptyBlockBetweenTwoInLine()
+			self.appendBlocks(checkEmpty)
+			changes += len(checkEmpty)
+
+			checkOutOfBlocks = self.checkOutOfBlockOneColorInLine()
+			self.appendBlocks(checkOutOfBlocks)
+			changes += len(checkOutOfBlocks)
+
+		if None in sum(self.Board.exportToBinaryMatrix(), []):
+			return self.randomizeOneBlock()
+		else:
+			return self.Board
+
+	def appendBlocks(self, blockList: list) -> None:
+		"""
+		Method change blocks types by recived data.
+		Parameters:
+			blockList (list): List with connection points and block type: 0-White 1-Black. sch. [(<x>, <y>, <color>), ...]
+		"""
+		for block in blockList:
+			self.Board[block[0], block[1]].Type = Block.WHITE if block[2] == 0 else Block.BLACK
 
 	def addWallsForDublesInLine(self) -> list:
 		"""
@@ -315,7 +356,45 @@ class Solve:
 		Returns:
 			list: List of coordinates where shoud be seted blocks and them color eg. [(3,5,0),(5,6,1)]
 		"""
-		pass
+		output = []
+		rows = self.Board.exportToBinaryMatrix()
+		columns = [[rows[y][x] for y in range(len(rows))] for x in range(len(rows[0]))]
+
+		#For rows
+		for y in range(self.Board.Height):
+			if None in rows[y]:
+				block = None
+				if rows[y].count(0) == self.Board.UniqueInX:
+					block = 1
+				elif rows[y].count(1) == self.Board.UniqueInX:
+					block = 0
+				if block is not None:
+					for x in range(self.Board.Width):
+						if rows[y][x] is None:
+							output.append((
+								x,
+								y,
+								block
+							))
+
+		#For columns
+		for x in range(self.Board.Width):
+			if None in columns[x]:
+				block = None
+				if columns[x].count(0) == self.Board.UniqueInY:
+					block = 1
+				elif columns[x].count(1) == self.Board.UniqueInY:
+					block = 0
+				if block is not None:
+					for y in range(self.Board.Height):
+						if columns[x][y] is None and (x, y, block) not in output:
+							output.append((
+								x,
+								y,
+								block
+							))
+
+		return output
 
 	def checkEmptyBlockBetweenTwoInLine(self) -> list:
 		"""
@@ -352,11 +431,20 @@ class Solve:
 
 		return output
 
-	def radomizeOneBlock(self) -> 'Board':
+	def randomizeOneBlock(self) -> 'Board':
 		"""
 		Method clone Board and set random block with random color.
 
 		Returns:
 			Board: Board object with correct blocks.
 		"""
-		pass
+		allEmptyBlocks = sum(([(x,y) for x in range(self.Board.Width) if self.Board._map[y][x].Type is Block.EMPTY] for y in range(self.Board.Height)), [])
+		randomedBlock = random.choice(allEmptyBlocks)
+		for blockType in (Block.WHITE, Block.BLACK):
+			board = self.Board.copy()
+			board._map[randomedBlock[1]][randomedBlock[0]].Type = blockType
+			solve = Solve(board)
+			solve.solveBoard()
+			if solve.Board.isValid():
+				return solve.Board
+		return self.Board

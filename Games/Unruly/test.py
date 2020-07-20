@@ -105,9 +105,42 @@ class Test_Solve(unittest.TestCase):
 			))
 		)
 
+	def test_checkOutOfBlockOneColorInLine(self):
+		self.assertEqual(
+			sorted(tuple(Solve(Board.parse("8x8:EcbCeabaAEFABBcbAaAaIaEb")).checkOutOfBlockOneColorInLine())),
+			sorted((
+				(1, 0, 1),
+				(1, 3, 1),
+				(1, 6, 1),
+				(0, 2, 1),
+				(3, 2, 1),
+				(7, 2, 1),
+				(4, 3, 0),
+				(4, 6, 0),
+				(4, 7, 0),
+				(6, 0, 0),
+				(6, 1, 0),
+				(6, 3, 0),
+				(6, 6, 0),
+				(0, 4, 0),
+				(3, 4, 0),
+				(5, 4, 0),
+				(7, 4, 0),
+				(0, 5, 1),
+				(2, 5, 1),
+			))
+		)
 
-
-
+	def test_solve(self):
+		dataSet = (
+			("8x8:ABlBBgCCjDfahd", "1010110001011001101001101001100101010011101011000110011001010011"),
+			("14x14:AciBEgDbebbecHJAdcIdaBCAliBACpcCADbacgCcbmcCcCa", "1100101001100111001100110100001101011010101101001001100101101100100110100100110100111001001100110101101100100110001100110110101100101010010100101101011001101100100101100100110110101000110101100101")
+		)
+		for data in dataSet:
+			self.assertEqual(
+				"".join((str(x) for x in sum(Solve(Board.parse(data[0])).solve(), []))),
+				data[1]
+			)
 
 
 
