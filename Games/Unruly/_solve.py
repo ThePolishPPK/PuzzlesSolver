@@ -133,17 +133,26 @@ class Board:
 			bool: True if board is valid else False
 		"""
 		board = self.exportToBinaryMatrix()
+		columns = tuple([board[y][x] for y in range(self.Height)] for x in range(self.Width))
 
-		# Check block counts in row
 		for y in range(self.Height):
+			# Check more block than 2 in line
+			for x in range(self.Width-2):
+				if self._map[y][x].Type == self._map[y][x+1].Type and self._map[y][x].Type == self._map[y][x+2].Type and self._map[y][x].Type != Block.EMPTY:
+					return False
+			# Check block counts in row
 			if (board[y].count(1) > self.UniqueInX or
 				board[y].count(0) > self.UniqueInX):
 				return False
 
-		# Check block counts in column
-		for y in ([board[y][x] for y in range(self.Height)] for x in range(self.Width)):
-			if (y.count(1) > self.UniqueInY or
-				y.count(0) > self.UniqueInY):
+		for x in range(self.Width):
+			# Check more block than 2 in line
+			for y in range(self.Height-2):
+				if self._map[y][x].Type == self._map[y+1][x].Type and self._map[y][x].Type == self._map[y+2][x].Type and self._map[y][x].Type != Block.EMPTY:
+					return False
+			# Check block counts in column
+			if (columns[x].count(1) > self.UniqueInY or
+				columns[x].count(0) > self.UniqueInY):
 				return False
 
 		if self.UniqueRowsAndColumns:
@@ -431,6 +440,8 @@ class Solve:
 
 		return output
 
+	# To Do: Add new method checking 3 empty blocks in row and ending limit of blocks.
+
 	def randomizeOneBlock(self) -> 'Board':
 		"""
 		Method clone Board and set random block with random color.
@@ -438,13 +449,16 @@ class Solve:
 		Returns:
 			Board: Board object with correct blocks.
 		"""
+		# To Do: Add better selecting block to random, not exactly random.
 		allEmptyBlocks = sum(([(x,y) for x in range(self.Board.Width) if self.Board._map[y][x].Type is Block.EMPTY] for y in range(self.Board.Height)), [])
 		randomedBlock = random.choice(allEmptyBlocks)
 		for blockType in (Block.WHITE, Block.BLACK):
 			board = self.Board.copy()
 			board._map[randomedBlock[1]][randomedBlock[0]].Type = blockType
+			if not board.isValid():
+				continue
 			solve = Solve(board)
-			solve.solveBoard()
-			if solve.Board.isValid():
-				return solve.Board
+			solvedBoard = solve.solveBoard()
+			if solvedBoard.isValid() and None not in sum(solvedBoard.exportToBinaryMatrix(), []):
+				return solvedBoard
 		return self.Board
