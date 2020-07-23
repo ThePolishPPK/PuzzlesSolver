@@ -278,6 +278,7 @@ class Solve:
 			Board: Solved Board object.
 		"""
 		changes = 1
+		usedUdf = set()
 		while changes > 0:
 			changes = 0
 
@@ -292,6 +293,12 @@ class Solve:
 			checkOutOfBlocks = self.checkOutOfBlockOneColorInLine()
 			self.appendBlocks(checkOutOfBlocks)
 			changes += len(checkOutOfBlocks)
+
+			udf = tuple(self.Undefined())
+			if hash(udf) not in usedUdf:
+				usedUdf.add(hash(udf))
+				self.appendBlocks(udf)
+				changes += len(udf)
 
 		if None in sum(self.Board.exportToBinaryMatrix(), []):
 			return self.randomizeOneBlock()
@@ -440,7 +447,104 @@ class Solve:
 
 		return output
 
-	# To Do: Add new method checking 3 empty blocks in row and ending limit of blocks.
+	def Undefined(self) -> list:
+		# To Do: Make better name for this methoad and make code shorter and faster
+		output = []
+		# For row
+		rows = [[self.Board._map[y][x].Type for x in range(self.Board.Width)] for y in range(self.Board.Width)]
+		for y in range(self.Board.Height):
+			countOfBlack = rows[y].count(Block.BLACK)
+			countOfWhite = rows[y].count(Block.WHITE)
+			minimum = 0 if countOfWhite < countOfBlack else 1
+			maxPossibleMinimumColor = [[0,0]]
+			for x in range(self.Board.Width):
+				if rows[y][x] in (Block.EMPTY, Block.WHITE if minimum == 0 else Block.BLACK):
+					if maxPossibleMinimumColor[-1][0]+maxPossibleMinimumColor[-1][1] == x:
+						maxPossibleMinimumColor[-1][1] += 1
+					else:
+						maxPossibleMinimumColor.append([x, 1])
+			m = max(x[1] for x in maxPossibleMinimumColor)
+			for maxPossible in maxPossibleMinimumColor:
+				if maxPossible[1] == m:
+					maxPossibleMinimumColor = maxPossible
+					break
+			KEKw = 3*(self.Board.UniqueInX-(countOfBlack if minimum == 0 else countOfWhite))
+			if KEKw == 0:
+				break
+			if maxPossibleMinimumColor[1] >= KEKw:
+				for x in range(self.Board.Width):
+					if rows[y][x] is Block.EMPTY and x not in range(maxPossibleMinimumColor[0], maxPossibleMinimumColor[0]+maxPossibleMinimumColor[1]):
+						output.append((x,y,minimum))
+			if maxPossibleMinimumColor[1]-1 == KEKw:
+				for x in (
+						maxPossibleMinimumColor[0],
+						maxPossibleMinimumColor[0]+maxPossibleMinimumColor[1]-1
+					):
+					output.append((
+						x,
+						y,
+						minimum
+					))
+			elif maxPossibleMinimumColor[1]-2 == KEKw:
+				for x in (
+						maxPossibleMinimumColor[0],
+						maxPossibleMinimumColor[0]+1,
+						maxPossibleMinimumColor[0]+maxPossibleMinimumColor[1]-2,
+						maxPossibleMinimumColor[0]+maxPossibleMinimumColor[1]-1
+					):
+					output.append((
+						x,
+						y,
+						minimum
+					))
+		# Columns
+		columns = [[self.Board._map[y][x].Type for y in range(self.Board.Width)] for x in range(self.Board.Width)]
+		for x in range(self.Board.Width):
+			countOfBlack = columns[x].count(Block.BLACK)
+			countOfWhite = columns[x].count(Block.WHITE)
+			minimum = 0 if countOfWhite < countOfBlack else 1
+			maxPossibleMinimumColor = [[-1,0]]
+			for y in range(self.Board.Height):
+				if rows[y][x] in (Block.EMPTY, Block.WHITE if minimum == 0 else Block.BLACK):
+					if maxPossibleMinimumColor[-1][0]+maxPossibleMinimumColor[-1][1] == y:
+						maxPossibleMinimumColor[-1][1] += 1
+					else:
+						maxPossibleMinimumColor.append([y, 1])
+			m = max(y[1] for y in maxPossibleMinimumColor)
+			for maxPossible in maxPossibleMinimumColor:
+				if maxPossible[1] == m:
+					maxPossibleMinimumColor = maxPossible
+					break
+			KEKw = 3*(self.Board.UniqueInY-(countOfBlack if minimum == 0 else countOfWhite))
+			if KEKw == 0:
+				break
+			if maxPossibleMinimumColor[1] >= KEKw:
+				for y in range(self.Board.Height):
+					if rows[y][x] is Block.EMPTY and y not in range(maxPossibleMinimumColor[0], maxPossibleMinimumColor[0]+maxPossibleMinimumColor[1]):
+						output.append((x,y,minimum))
+			if maxPossibleMinimumColor[1]-1 == KEKw:
+				for y in (
+						maxPossibleMinimumColor[0],
+						maxPossibleMinimumColor[0]+maxPossibleMinimumColor[1]-1
+					):
+					output.append((
+						x,
+						y,
+						minimum
+					))
+			elif maxPossibleMinimumColor[1]-2 == KEKw:
+				for y in (
+						maxPossibleMinimumColor[0],
+						maxPossibleMinimumColor[0]+1,
+						maxPossibleMinimumColor[0]+maxPossibleMinimumColor[1]-2,
+						maxPossibleMinimumColor[0]+maxPossibleMinimumColor[1]-1
+					):
+					output.append((
+						x,
+						y,
+						minimum
+					))
+		return list(set(output))
 
 	def randomizeOneBlock(self) -> 'Board':
 		"""
