@@ -278,7 +278,7 @@ class Solve:
 			Board: Solved Board object.
 		"""
 		changes = 1
-		usedUdf = set()
+		usedLimits = set()
 		while changes > 0:
 			changes = 0
 
@@ -294,11 +294,11 @@ class Solve:
 			self.appendBlocks(checkOutOfBlocks)
 			changes += len(checkOutOfBlocks)
 
-			udf = tuple(self.Undefined())
-			if hash(udf) not in usedUdf:
-				usedUdf.add(hash(udf))
-				self.appendBlocks(udf)
-				changes += len(udf)
+			limits = tuple(self.checkSessionLimits())
+			if hash(limits) not in usedLimits:
+				usedLimits.add(hash(limits))
+				self.appendBlocks(limits)
+				changes += len(limits)
 
 		if None in sum(self.Board.exportToBinaryMatrix(), []):
 			return self.randomizeOneBlock()
@@ -447,103 +447,59 @@ class Solve:
 
 		return output
 
-	def Undefined(self) -> list:
-		# To Do: Make better name for this methoad and make code shorter and faster
+	def checkSessionLimits(self) -> list:
 		output = []
-		# For row
-		rows = [[self.Board._map[y][x].Type for x in range(self.Board.Width)] for y in range(self.Board.Width)]
+		rows = [[self.Board._map[y][x].Type for x in range(self.Board.Width)] for y in range(self.Board.Height)]
+		columns = [[rows[y][x] for y in range(self.Board.Height)] for x in range(self.Board.Width)]
+		# Rows
 		for y in range(self.Board.Height):
-			countOfBlack = rows[y].count(Block.BLACK)
-			countOfWhite = rows[y].count(Block.WHITE)
-			minimum = 0 if countOfWhite < countOfBlack else 1
-			maxPossibleMinimumColor = [[0,0]]
+			countBlack, countWhite = rows[y].count(Block.BLACK), rows[y].count(Block.WHITE)
+			minimumBlock = 0 if countWhite < countBlack else 1
+			maxSessions = [[-1,0]]
 			for x in range(self.Board.Width):
-				if rows[y][x] in (Block.EMPTY, Block.WHITE if minimum == 0 else Block.BLACK):
-					if maxPossibleMinimumColor[-1][0]+maxPossibleMinimumColor[-1][1] == x:
-						maxPossibleMinimumColor[-1][1] += 1
+				if rows[y][x] in (Block.EMPTY, Block.WHITE if minimumBlock == 0 else Block.BLACK):
+					if sum(maxSessions[-1]) == x:
+						maxSessions[-1][1] += 1
 					else:
-						maxPossibleMinimumColor.append([x, 1])
-			m = max(x[1] for x in maxPossibleMinimumColor)
-			for maxPossible in maxPossibleMinimumColor:
-				if maxPossible[1] == m:
-					maxPossibleMinimumColor = maxPossible
-					break
-			KEKw = 3*(self.Board.UniqueInX-(countOfBlack if minimum == 0 else countOfWhite))
-			if KEKw == 0:
+						maxSessions.append([x, 1])
+			maxSession = max(maxSessions, key=lambda x: x[1])
+			exceptedMinimum = 3 * (self.Board.UniqueInX - (countWhite if minimumBlock == 1 else countBlack))
+			if exceptedMinimum == 0:
 				break
-			if maxPossibleMinimumColor[1] >= KEKw:
-				for x in range(self.Board.Width):
-					if rows[y][x] is Block.EMPTY and x not in range(maxPossibleMinimumColor[0], maxPossibleMinimumColor[0]+maxPossibleMinimumColor[1]):
-						output.append((x,y,minimum))
-			if maxPossibleMinimumColor[1]-1 == KEKw:
-				for x in (
-						maxPossibleMinimumColor[0],
-						maxPossibleMinimumColor[0]+maxPossibleMinimumColor[1]-1
-					):
-					output.append((
-						x,
-						y,
-						minimum
-					))
-			elif maxPossibleMinimumColor[1]-2 == KEKw:
-				for x in (
-						maxPossibleMinimumColor[0],
-						maxPossibleMinimumColor[0]+1,
-						maxPossibleMinimumColor[0]+maxPossibleMinimumColor[1]-2,
-						maxPossibleMinimumColor[0]+maxPossibleMinimumColor[1]-1
-					):
-					output.append((
-						x,
-						y,
-						minimum
-					))
+			xBlocks = []
+			if maxSession[1] >= exceptedMinimum:
+				xBlocks.extend(x for x in range(0, self.Board.Width) if rows[y][x] is Block.EMPTY and x not in range(maxSession[0], sum(maxSession)))
+			if maxSession[1]-1 >= exceptedMinimum:
+				xBlocks.extend((maxSession[0], sum(maxSession)-1))
+			if maxSession[1]-2 == exceptedMinimum:
+				xBlocks.extend((maxSession[0]+1, sum(maxSession)-2))
+			for x in xBlocks:
+				output.append((x, y, minimumBlock))
+
 		# Columns
-		columns = [[self.Board._map[y][x].Type for y in range(self.Board.Width)] for x in range(self.Board.Width)]
 		for x in range(self.Board.Width):
-			countOfBlack = columns[x].count(Block.BLACK)
-			countOfWhite = columns[x].count(Block.WHITE)
-			minimum = 0 if countOfWhite < countOfBlack else 1
-			maxPossibleMinimumColor = [[-1,0]]
+			countBlack, countWhite = columns[x].count(Block.BLACK), columns[x].count(Block.WHITE)
+			minimumBlock = 0 if countWhite < countBlack else 1
+			maxSessions = [[-1,0]]
 			for y in range(self.Board.Height):
-				if rows[y][x] in (Block.EMPTY, Block.WHITE if minimum == 0 else Block.BLACK):
-					if maxPossibleMinimumColor[-1][0]+maxPossibleMinimumColor[-1][1] == y:
-						maxPossibleMinimumColor[-1][1] += 1
+				if rows[y][x] in (Block.EMPTY, Block.WHITE if minimumBlock == 0 else Block.BLACK):
+					if sum(maxSessions[-1]) == y:
+						maxSessions[-1][1] += 1
 					else:
-						maxPossibleMinimumColor.append([y, 1])
-			m = max(y[1] for y in maxPossibleMinimumColor)
-			for maxPossible in maxPossibleMinimumColor:
-				if maxPossible[1] == m:
-					maxPossibleMinimumColor = maxPossible
-					break
-			KEKw = 3*(self.Board.UniqueInY-(countOfBlack if minimum == 0 else countOfWhite))
-			if KEKw == 0:
+						maxSessions.append([y, 1])
+			maxSession = max(maxSessions, key=lambda y: y[1])
+			exceptedMinimum = 3 * (self.Board.UniqueInY - (countWhite if minimumBlock == 1 else countBlack))
+			if exceptedMinimum == 0:
 				break
-			if maxPossibleMinimumColor[1] >= KEKw:
-				for y in range(self.Board.Height):
-					if rows[y][x] is Block.EMPTY and y not in range(maxPossibleMinimumColor[0], maxPossibleMinimumColor[0]+maxPossibleMinimumColor[1]):
-						output.append((x,y,minimum))
-			if maxPossibleMinimumColor[1]-1 == KEKw:
-				for y in (
-						maxPossibleMinimumColor[0],
-						maxPossibleMinimumColor[0]+maxPossibleMinimumColor[1]-1
-					):
-					output.append((
-						x,
-						y,
-						minimum
-					))
-			elif maxPossibleMinimumColor[1]-2 == KEKw:
-				for y in (
-						maxPossibleMinimumColor[0],
-						maxPossibleMinimumColor[0]+1,
-						maxPossibleMinimumColor[0]+maxPossibleMinimumColor[1]-2,
-						maxPossibleMinimumColor[0]+maxPossibleMinimumColor[1]-1
-					):
-					output.append((
-						x,
-						y,
-						minimum
-					))
+			yBlocks = []
+			if maxSession[1] >= exceptedMinimum:
+				yBlocks.extend(y for y in range(0, self.Board.Width) if rows[y][x] is Block.EMPTY and y not in range(maxSession[0], sum(maxSession)))
+			if maxSession[1]-1 >= exceptedMinimum:
+				yBlocks.extend((maxSession[0], sum(maxSession)-1))
+			if maxSession[1]-2 == exceptedMinimum:
+				yBlocks.extend((maxSession[0]+1, sum(maxSession)-2))
+			for y in yBlocks:
+				output.append((x, y, minimumBlock))
 		return list(set(output))
 
 	def randomizeOneBlock(self) -> 'Board':
