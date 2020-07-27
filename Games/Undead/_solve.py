@@ -44,10 +44,10 @@ class Board:
 		self.Vampires = 0
 		self.Zombies = 0
 		self.Ghosts = 0
-		self.SeenFromTop = []
-		self.SeenFromBottom= []
-		self.SeenFromLeft = []
-		self.SeenFromRight = []
+		self.SeenFromTop = ()
+		self.SeenFromBottom= ()
+		self.SeenFromLeft = ()
+		self.SeenFromRight = ()
 		self._map = [[0]*width for _ in range(0, height) ]
 
 	@classmethod
@@ -68,10 +68,10 @@ class Board:
 		board.Zombies = int(data.group('z'))
 
 		seen = [int(x) for x in data.group('seen').split(',')]
-		board.SeenFromTop = seen[0:board.Width]
-		board.SeenFromRight = seen[board.Width:board.Width+board.Height]
-		board.SeenFromBottom = seen[board.Width+board.Height:(2*board.Width)+board.Height][::-1]
-		board.SeenFromLeft = seen[(2*board.Width)+board.Height:(2*(board.Width+board.Height))][::-1]
+		board.SeenFromTop = tuple(seen[0:board.Width])
+		board.SeenFromRight = tuple(seen[board.Width:board.Width+board.Height])
+		board.SeenFromBottom = tuple(seen[board.Width+board.Height:(2*board.Width)+board.Height][::-1])
+		board.SeenFromLeft = tuple(seen[(2*board.Width)+board.Height:(2*(board.Width+board.Height))][::-1])
 
 		offset = 0
 		for char in data.group('mirrors'):
@@ -83,4 +83,36 @@ class Board:
 				if offset/board.Width >= board.Height:
 					break
 
+		return board
+
+	def exportToSolveFormat(self) -> str:
+		"""
+		Method parse some data from solved board to solve string:
+
+		Returns:
+			str: Solve string.
+		"""
+		output = " "
+		for (index, value) in enumerate(x for x in sum(self._map, []) if x in (Board.VAMPIRE, Board.ZOMBIE, Board.GHOST, Board.EMPTY)):
+			output += 'V' if value == Board.VAMPIRE else ('Z' if value == Board.ZOMBIE else ('G' if value == Board.GHOST else 'N'))
+			output += str(index+1)
+			output += ";"
+		return output[1:-1]
+
+	def copy(self) -> 'Board':
+		"""
+		Method make copy of Board object.
+
+		Returns:
+			Board: Copied Board object.
+		"""
+		board = Board(self.Width, self.Height)
+		board._map = copy.deepcopy(self._map)
+		board.Vampires = self.Vampires
+		board.Zombies = self.Zombies
+		board.Ghosts = self.Ghosts
+		board.SeenFromTop = copy.deepcopy(self.SeenFromTop)
+		board.SeenFromBottom = copy.deepcopy(self.SeenFromBottom)
+		board.SeenFromLeft = copy.deepcopy(self.SeenFromLeft)
+		board.SeenFromRight = copy.deepcopy(self.SeenFromRight)
 		return board
