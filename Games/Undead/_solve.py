@@ -1,4 +1,4 @@
-import re
+import re, copy
 
 class Board:
 	"""
@@ -116,3 +116,108 @@ class Board:
 		board.SeenFromLeft = copy.deepcopy(self.SeenFromLeft)
 		board.SeenFromRight = copy.deepcopy(self.SeenFromRight)
 		return board
+
+class Solve:
+	"""
+	Class contain all method required to solve and solve gived board.
+
+	Attributes:
+		Board (Board): Board object containing map to solve.
+		Possible (dict): Dict of possible monsters to set on block. Schema: {(<x>,<y>): [<Vampire>/<Ghost>/<Zombie>], ...}
+		Vampires (int): Count of Vampires left to set.
+		Ghosts (int): Count of Ghosts left to set.
+		Zombies (int): Count of Zombies left to set.
+	"""
+	def __init__(self, board: Board) -> None:
+		"""
+		Constructor for class.
+
+		Parameters:
+			board (Board): Board object with map to solve.
+		"""
+		assert type(board) is Board and [len(y) for y in board._map].count(board.Width) == board.Height
+
+		self.Board = board
+		OneDBoardMap = sum(board._map, [])
+		self.Vampires = board.Vampires - OneDBoardMap.count(Board.VAMPIRE)
+		self.Ghosts = board.Ghosts - OneDBoardMap.count(Board.GHOST)
+		self.Zombies = board.Zombies - OneDBoardMap.count(Board.ZOMBIE)
+
+		if self.Vampires < 0 or self.Ghosts < 0 or self.Zombies < 0:
+			raise ValueError("Board map have seted more monsters than is available.")
+		elif self.Vampires + self.Ghosts + self.Zombies != OneDBoardMap.count(Board.EMPTY):
+			raise ValueError("Board is invalid, count of free space is not equal monsters left to set.")
+
+		self.Possible = dict()
+		allAvailableMonsters = []
+		if self.Vampires > 0:
+			allAvailableMonsters.append(Board.VAMPIRE)
+		if self.Zombies > 0:
+			allAvailableMonsters.append(Board.ZOMBIE)
+		if self.Ghosts > 0:
+			allAvailableMonsters.append(Board.GHOST)
+
+		for y in range(0, board.Height):
+			for x in range(0, board.Width):
+				if board._map[y][x] is Board.EMPTY:
+					self.Possible = copy.deepcopy(allAvailableMonsters)
+
+	def getAllSeenBlocks(self, direction: int, axisValue: int) -> tuple:
+		"""
+		Method get all blocks seen from specifed direction and location on board.
+
+		Parameters:
+			direction (int): Direction define from you are looking.
+			axisValue (int): Value of x on look axis.
+
+		Returns:
+			tuple: Tuple of tuples with location and status after first mirror. Schema: ((<x>, <y>, <0 if before first mirror else 1>), ...)
+
+		Directions:
+			0 - From Top to Bottom
+			1 - From Right to Left
+			2 - From Bottom to Top
+			3 - From Left to Right
+		"""
+		assert type(direction) == int and direction >= 0 and direction <= 3
+		assert type(axisValue) == int and axisValue >= 0 and axisValue < (self.Board.Width if direction in (2, 0) else self.Board.Height)
+
+		blocks = []
+
+		x = self.Board.Width-1 if direction == 1 else (0 if direction == 3 else axisValue )
+		y = self.Board.Height-1 if direction == 2 else (0 if direction == 0 else axisValue )
+		xInc = 1 if direction == 3 else (-1 if direction == 1 else 0)
+		yInc = 1 if direction == 0 else (-1 if direction == 2 else 0)
+		afterMirror = False
+
+		while x in range(0, self.Board.Width) and y in range(0, self.Board.Height):
+			if self.Board._map[y][x] in (Board.MIRROR_LEFT, Board.MIRROR_RIGHT):
+				if xInc == 0:
+					xInc, yInc = yInc, 0
+				else:
+					yInc, xInc = xInc, 0
+				if self.Board._map[y][x] is Board.MIRROR_RIGHT:
+					if yInc == 0:
+						xInc *= -1
+					else:
+						yInc *= -1
+				afterMirror = True
+			else:
+				blocks.append((x, y, 1 if afterMirror else 0))
+			x += xInc
+			y += yInc
+		return tuple(blocks)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
