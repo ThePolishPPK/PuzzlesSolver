@@ -1,4 +1,22 @@
-import re, copy
+import re, copy, enum
+
+class Block(enum.Enum):
+	EMPTY = 0
+	MIRROR_LEFT = 1
+	MIRROR_RIGHT = 2
+	VAMPIRE = 3
+	ZOMBIE = 4
+	GHOST = 5
+	def __eq__(self, value):
+		return self.value == value
+
+class Direction(enum.Enum):
+	BOTTOM = 0
+	LEFT = 1
+	TOP = 2
+	RIGHT = 3
+	def __eq__(self, value):
+		return self.value == value
 
 class Board:
 	"""
@@ -15,21 +33,7 @@ class Board:
 		SeenFromLeft (tuple): Tuple of ints containing count of seen monsters from left on specific row.
 		SeenFromRight (tuple): Tuple of ints containing count of seen monsters from right on specific row.
 		_map (list): List of rows with ints defining specific element on board.
-
-	BoardElements:
-		0 - Empty
-		1 - Mirror (Left)	(\)
-		2 - Mirror (Right)	(/)
-		3 - Vampire
-		4 - Zombie
-		5 - Ghost
 	"""
-	EMPTY = 0
-	MIRROR_LEFT = 1
-	MIRROR_RIGHT = 2
-	VAMPIRE = 3
-	ZOMBIE = 4
-	GHOST = 5
 
 	def __init__(self, width: int, height: int) -> None:
 		"""
@@ -76,7 +80,7 @@ class Board:
 		offset = 0
 		for char in data.group('mirrors'):
 			if char in ('R', 'L'):
-				board._map[offset//board.Width][offset%board.Width] = Board.MIRROR_RIGHT if char == 'R' else Board.MIRROR_LEFT
+				board._map[offset//board.Width][offset%board.Width] = Block.MIRROR_RIGHT.value if char == 'R' else Block.MIRROR_LEFT.value
 				offset += 1
 			else:
 				offset += ord(char)-96
@@ -93,8 +97,8 @@ class Board:
 			str: Solve string.
 		"""
 		output = " "
-		for (index, value) in enumerate(x for x in sum(self._map, []) if x in (Board.VAMPIRE, Board.ZOMBIE, Board.GHOST, Board.EMPTY)):
-			output += 'V' if value == Board.VAMPIRE else ('Z' if value == Board.ZOMBIE else ('G' if value == Board.GHOST else 'N'))
+		for (index, value) in enumerate(x for x in sum(self._map, []) if Block(x) in (Block.VAMPIRE, Block.ZOMBIE, Block.GHOST, Block.EMPTY)):
+			output += 'V' if value == Block.VAMPIRE else ('Z' if value == Block.ZOMBIE else ('G' if value == Block.GHOST else 'N'))
 			output += str(index+1)
 			output += ";"
 		return output[1:-1]
@@ -139,30 +143,30 @@ class Solve:
 
 		self.Board = board
 		OneDBoardMap = sum(board._map, [])
-		self.Vampires = board.Vampires - OneDBoardMap.count(Board.VAMPIRE)
-		self.Ghosts = board.Ghosts - OneDBoardMap.count(Board.GHOST)
-		self.Zombies = board.Zombies - OneDBoardMap.count(Board.ZOMBIE)
+		self.Vampires = board.Vampires - OneDBoardMap.count(Block.VAMPIRE.value)
+		self.Ghosts = board.Ghosts - OneDBoardMap.count(Block.GHOST.value)
+		self.Zombies = board.Zombies - OneDBoardMap.count(Block.ZOMBIE.value)
 
 		if self.Vampires < 0 or self.Ghosts < 0 or self.Zombies < 0:
 			raise ValueError("Board map have seted more monsters than is available.")
-		elif self.Vampires + self.Ghosts + self.Zombies != OneDBoardMap.count(Board.EMPTY):
+		elif self.Vampires + self.Ghosts + self.Zombies != OneDBoardMap.count(Block.EMPTY.value):
 			raise ValueError("Board is invalid, count of free space is not equal monsters left to set.")
 
 		self.Possible = dict()
 		allAvailableMonsters = []
 		if self.Vampires > 0:
-			allAvailableMonsters.append(Board.VAMPIRE)
+			allAvailableMonsters.append(Block.VAMPIRE.value)
 		if self.Zombies > 0:
-			allAvailableMonsters.append(Board.ZOMBIE)
+			allAvailableMonsters.append(Block.ZOMBIE.value)
 		if self.Ghosts > 0:
-			allAvailableMonsters.append(Board.GHOST)
+			allAvailableMonsters.append(Block.GHOST.value)
 
 		for y in range(0, board.Height):
 			for x in range(0, board.Width):
-				if board._map[y][x] is Board.EMPTY:
+				if board._map[y][x] == Block.EMPTY:
 					self.Possible = copy.deepcopy(allAvailableMonsters)
 
-	def getAllSeenBlocks(self, direction: int, axisValue: int) -> tuple:
+	def getAllSeenBlocks(self, direction: Direction, axisValue: int) -> tuple:
 		"""
 		Method get all blocks seen from specifed direction and location on board.
 
@@ -172,31 +176,25 @@ class Solve:
 
 		Returns:
 			tuple: Tuple of tuples with location and status after first mirror. Schema: ((<x>, <y>, <0 if before first mirror else 1>), ...)
-
-		Directions:
-			0 - From Top to Bottom
-			1 - From Right to Left
-			2 - From Bottom to Top
-			3 - From Left to Right
 		"""
-		assert type(direction) == int and direction >= 0 and direction <= 3
-		assert type(axisValue) == int and axisValue >= 0 and axisValue < (self.Board.Width if direction in (2, 0) else self.Board.Height)
+		assert type(direction) == Direction
+		assert type(axisValue) == int and axisValue >= 0 and axisValue < (self.Board.Width if Direction(direction) in (Direction.TOP, Direction.BOTTOM) else self.Board.Height)
 
 		blocks = []
 
-		x = self.Board.Width-1 if direction == 1 else (0 if direction == 3 else axisValue )
-		y = self.Board.Height-1 if direction == 2 else (0 if direction == 0 else axisValue )
-		xInc = 1 if direction == 3 else (-1 if direction == 1 else 0)
-		yInc = 1 if direction == 0 else (-1 if direction == 2 else 0)
+		x = self.Board.Width-1 if direction == Direction.LEFT else (0 if direction == Direction.RIGHT else axisValue )
+		y = self.Board.Height-1 if direction == Direction.TOP else (0 if direction == Direction.BOTTOM else axisValue )
+		yInc = 1 if direction == Direction.BOTTOM else (-1 if direction == Direction.TOP else 0)
+		xInc = 1 if direction == Direction.RIGHT else (-1 if direction == Direction.LEFT else 0)
 		afterMirror = False
 
 		while x in range(0, self.Board.Width) and y in range(0, self.Board.Height):
-			if self.Board._map[y][x] in (Board.MIRROR_LEFT, Board.MIRROR_RIGHT):
+			if Block(self.Board._map[y][x]) in (Block.MIRROR_LEFT, Block.MIRROR_RIGHT):
 				if xInc == 0:
 					xInc, yInc = yInc, 0
 				else:
 					yInc, xInc = xInc, 0
-				if self.Board._map[y][x] is Board.MIRROR_RIGHT:
+				if Block(self.Board._map[y][x]) is Block.MIRROR_RIGHT:
 					if yInc == 0:
 						xInc *= -1
 					else:

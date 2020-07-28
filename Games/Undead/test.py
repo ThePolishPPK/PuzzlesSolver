@@ -1,5 +1,5 @@
 import unittest
-from _solve import Board, Solve
+from _solve import Board, Solve, Block, Direction
 
 class TestBoard(unittest.TestCase):
 	def test_parseGameID(self):
@@ -7,10 +7,10 @@ class TestBoard(unittest.TestCase):
 		self.assertEqual(
 			tuple(tuple(row) for row in parsed._map),
 			(
-				(Board.MIRROR_LEFT, Board.EMPTY, Board.MIRROR_LEFT, Board.MIRROR_RIGHT),
-				(Board.EMPTY, Board.EMPTY, Board.EMPTY, Board.EMPTY),
-				(Board.EMPTY, Board.MIRROR_LEFT, Board.MIRROR_LEFT, Board.EMPTY),
-				(Board.MIRROR_RIGHT, Board.EMPTY, Board.MIRROR_RIGHT, Board.EMPTY)
+				(Block.MIRROR_LEFT.value, Block.EMPTY.value, Block.MIRROR_LEFT.value, Block.MIRROR_RIGHT.value),
+				(Block.EMPTY.value, Block.EMPTY.value, Block.EMPTY.value, Block.EMPTY.value),
+				(Block.EMPTY.value, Block.MIRROR_LEFT.value, Block.MIRROR_LEFT.value, Block.EMPTY.value),
+				(Block.MIRROR_RIGHT.value, Block.EMPTY.value, Block.MIRROR_RIGHT.value, Block.EMPTY.value)
 			)
 		)
 		self.assertEqual(
@@ -55,27 +55,27 @@ class TestSolve(unittest.TestCase):
 		solve = Solve(Board.parseGameID("4x4:3,3,2,LbLLRbLaLcLL,3,1,2,0,0,2,2,3,0,1,3,1,1,0,0,0"))
 		self.assertEqual(
 			# From Left on column with ID 1
-			solve.getAllSeenBlocks(3, 1),
+			solve.getAllSeenBlocks(Direction.RIGHT, 1),
 			((1,2,1),)
 		)
 		self.assertEqual(
 			# From Left on column with ID 0
-			solve.getAllSeenBlocks(3, 0),
+			solve.getAllSeenBlocks(Direction.RIGHT, 0),
 			((1,0,1),)
 		)
 		self.assertEqual(
 			# From Bottom on column with ID 1
-			solve.getAllSeenBlocks(2, 1),
+			solve.getAllSeenBlocks(Direction.TOP, 1),
 			((1,3,0), (1,2,0), (2,1,1), (3,1,1))
 		)
 		self.assertEqual(
 			# From Right on column with ID 3
-			solve.getAllSeenBlocks(1, 3),
+			solve.getAllSeenBlocks(Direction.LEFT, 3),
 			((3,2,1), (3,1,1), (2,0,1), (1,0,1))
 		)
 		self.assertEqual(
 			# From Top on column with ID 2
-			solve.getAllSeenBlocks(0, 2),
+			solve.getAllSeenBlocks(Direction.BOTTOM, 2),
 			((2,0,0), (2,1,0), (3,2,1))
 		)
 
