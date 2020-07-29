@@ -1,4 +1,4 @@
-import unittest
+import unittest, pudb
 from _solve import Board, Solve, Block, Direction
 
 class TestBoard(unittest.TestCase):
@@ -55,30 +55,42 @@ class TestSolve(unittest.TestCase):
 		solve = Solve(Board.parseGameID("4x4:3,3,2,LbLLRbLaLcLL,3,1,2,0,0,2,2,3,0,1,3,1,1,0,0,0"))
 		self.assertEqual(
 			# From Left on column with ID 1
-			solve.getAllSeenBlocks(Direction.RIGHT, 1),
+			solve.getAllSeenBlocks(Direction.LEFT, 1),
 			((1,2,1),)
 		)
 		self.assertEqual(
 			# From Left on column with ID 0
-			solve.getAllSeenBlocks(Direction.RIGHT, 0),
+			solve.getAllSeenBlocks(Direction.LEFT, 0),
 			((1,0,1),)
 		)
 		self.assertEqual(
 			# From Bottom on column with ID 1
-			solve.getAllSeenBlocks(Direction.TOP, 1),
+			solve.getAllSeenBlocks(Direction.BOTTOM, 1),
 			((1,3,0), (1,2,0), (2,1,1), (3,1,1))
 		)
 		self.assertEqual(
 			# From Right on column with ID 3
-			solve.getAllSeenBlocks(Direction.LEFT, 3),
+			solve.getAllSeenBlocks(Direction.RIGHT, 3),
 			((3,2,1), (3,1,1), (2,0,1), (1,0,1))
 		)
 		self.assertEqual(
 			# From Top on column with ID 2
-			solve.getAllSeenBlocks(Direction.BOTTOM, 2),
+			solve.getAllSeenBlocks(Direction.TOP, 2),
 			((2,0,0), (2,1,0), (3,2,1))
 		)
 
+	def test_setTo0Blocks(self):
+		self.assertEqual(
+			sorted(tuple(Solve(Board.parseGameID("4x4:5,3,2,aLcRLcLLaLb,3,2,1,0,0,1,2,2,3,1,0,3,1,3,2,0")).setTo0Blocks())),
+			sorted((
+				(0, 0, Block.GHOST.value),
+				(2, 0, Block.GHOST.value),
+				(3, 0, Block.GHOST.value),
+				(3, 1, Block.GHOST.value),
+				(0, 1, Block.VAMPIRE.value),
+				(0, 3, Block.VAMPIRE.value)
+			))
+		)
 
 
 

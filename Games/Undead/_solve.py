@@ -65,7 +65,7 @@ class Board:
 		Returns:
 			Board: Board object.
 		"""
-		data = re.search(r'^(?P<w>[0-9]+)x(?P<h>[0-9]+):(?P<g>[0-9]+),(?P<v>[0-9]+),(?P<z>[0-9]+),(?P<mirrors>((R|L)[a-z]?)+),(?P<seen>([0-9],?)+)$', gameID)
+		data = re.search(r'^(?P<w>[0-9]+)x(?P<h>[0-9]+):(?P<g>[0-9]+),(?P<v>[0-9]+),(?P<z>[0-9]+),(?P<mirrors>([a-z]?(R|L)[a-z]?)+),(?P<seen>([0-9],?)+)$', gameID)
 		board = cls(int(data.group('w')), int(data.group('h')))
 		board.Ghosts = int(data.group('g'))
 		board.Vampires = int(data.group('v'))
@@ -171,7 +171,7 @@ class Solve:
 		Method get all blocks seen from specifed direction and location on board.
 
 		Parameters:
-			direction (int): Direction define from you are looking.
+			direction (Direction): Direction define from you are looking.
 			axisValue (int): Value of x on look axis.
 
 		Returns:
@@ -182,10 +182,10 @@ class Solve:
 
 		blocks = []
 
-		x = self.Board.Width-1 if direction == Direction.LEFT else (0 if direction == Direction.RIGHT else axisValue )
-		y = self.Board.Height-1 if direction == Direction.TOP else (0 if direction == Direction.BOTTOM else axisValue )
-		yInc = 1 if direction == Direction.BOTTOM else (-1 if direction == Direction.TOP else 0)
-		xInc = 1 if direction == Direction.RIGHT else (-1 if direction == Direction.LEFT else 0)
+		x = self.Board.Width-1 if direction == Direction.RIGHT else (0 if direction == Direction.LEFT else axisValue )
+		y = self.Board.Height-1 if direction == Direction.BOTTOM else (0 if direction == Direction.TOP else axisValue )
+		yInc = 1 if direction == Direction.TOP else (-1 if direction == Direction.BOTTOM else 0)
+		xInc = 1 if direction == Direction.LEFT else (-1 if direction == Direction.RIGHT else 0)
 		afterMirror = False
 
 		while x in range(0, self.Board.Width) and y in range(0, self.Board.Height):
@@ -206,7 +206,20 @@ class Solve:
 			y += yInc
 		return tuple(blocks)
 
-
+	def setTo0Blocks(self):
+		zeroBlocks = []
+		for direction, seenBoard in (
+				(Direction.TOP, self.Board.SeenFromTop),
+				(Direction.BOTTOM, self.Board.SeenFromBottom),
+				(Direction.LEFT, self.Board.SeenFromLeft),
+				(Direction.RIGHT, self.Board.SeenFromRight),
+			):
+			if 0 in seenBoard:
+				for block_id, block in enumerate(seenBoard):
+					if block == 0:
+						zeroBlocks.append((direction, block_id))
+		output = sum([list(self.getAllSeenBlocks(direction, axis)) for direction, axis in zeroBlocks], [])
+		return tuple(set((b[0], b[1], Block.VAMPIRE.value if b[2] == 1 else Block.GHOST.value) for b in output))
 
 
 
