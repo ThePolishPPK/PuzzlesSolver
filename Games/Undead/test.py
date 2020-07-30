@@ -92,7 +92,21 @@ class TestSolve(unittest.TestCase):
 			))
 		)
 
-
+	def test_setToLimitedBlocks(self):
+		board = Board.parseGameID("4x4:3,2,7,cRLaRhR,3,3,3,3,3,3,2,0,0,0,3,2,3,2,2,3")
+		board._map[2][1] = Block.GHOST
+		self.assertEqual(
+			sorted(Solve(board).setToLimitedBlocks()),
+			sorted((
+				(0, 0, {Block.ZOMBIE.value}),
+				(1, 0, {Block.ZOMBIE.value}),
+				(2, 0, {Block.ZOMBIE.value}),
+				(1, 1, {Block.ZOMBIE.value}),
+				(0, 3, {Block.ZOMBIE.value}),
+				(1, 3, {Block.ZOMBIE.value, Block.VAMPIRE.value}),
+				(2, 2, {Block.GHOST.value}),
+			))
+		)
 
 
 
