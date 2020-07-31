@@ -94,17 +94,41 @@ class TestSolve(unittest.TestCase):
 
 	def test_setToLimitedBlocks(self):
 		board = Board.parseGameID("4x4:3,2,7,cRLaRhR,3,3,3,3,3,3,2,0,0,0,3,2,3,2,2,3")
-		board._map[2][1] = Block.GHOST
+		board._map[2][1] = Block.GHOST.value
+		solve = Solve(board)
+		result1 = solve.setToLimitedBlocks()
 		self.assertEqual(
-			sorted(Solve(board).setToLimitedBlocks()),
+			sorted(result1),
 			sorted((
 				(0, 0, {Block.ZOMBIE.value}),
-				(1, 0, {Block.ZOMBIE.value}),
-				(2, 0, {Block.ZOMBIE.value}),
-				(1, 1, {Block.ZOMBIE.value}),
+				(0, 2, {Block.ZOMBIE.value}),
 				(0, 3, {Block.ZOMBIE.value}),
+				(1, 0, {Block.ZOMBIE.value}),
+				(1, 1, {Block.ZOMBIE.value}),
 				(1, 3, {Block.ZOMBIE.value, Block.VAMPIRE.value}),
+				(2, 0, {Block.ZOMBIE.value}),
 				(2, 2, {Block.GHOST.value}),
+				(2, 3, {Block.GHOST.value}),
+				(3, 1, {Block.VAMPIRE.value})
+			))
+		)
+		solve.appendNewPossibles(((x[0], x[1]), x[2]) for x in result1)
+		solve.searchAndSetOnlyOnePossible()
+		result2 = solve.setToLimitedBlocks()
+		self.assertEqual(
+			sorted(result2),
+			sorted((
+				(3, 2, {Block.ZOMBIE.value}),
+				(1, 3, {Block.ZOMBIE.value, Block.VAMPIRE.value})
+			))
+		)
+		solve.appendNewPossibles(((x[0], x[1]), x[2]) for x in result2)
+		solve.searchAndSetOnlyOnePossible()
+		result3 = solve.setToLimitedBlocks()
+		self.assertEqual(
+			sorted(result3),
+			sorted((
+				(1, 3, {Block.VAMPIRE.value}),
 			))
 		)
 

@@ -206,7 +206,31 @@ class Solve:
 			y += yInc
 		return tuple(blocks)
 
-	def setTo0Blocks(self):
+	def appendNewPossibles(self, possibles: tuple):
+		"""
+		Method append recived possibles.
+		Parameters:
+			possibles (tuple): Tuple of connection points with possible monsters to set. Schema: (((<x>, <y>), {<MonsterID>, ...}), ...)
+		"""
+		for possible in possibles:
+			if possible[0] in self.Possible:
+				self.Possible[possible[0]] = list(set(self.Possible[possible[0]]) & possible[1])
+			else:
+				self.Possible[possible[0]] = list(possible[1])
+
+	def searchAndSetOnlyOnePossible(self):
+		"""
+		Method search only once possible monster to set from Possible list and set them to board.
+		"""
+		toRemove = []
+		for block, monsters in self.Possible.items():
+			if len(monsters) == 1:
+				self.Board._map[block[1]][block[0]] = monsters[0]
+				toRemove.append(block)
+		for block in toRemove:
+			self.Possible.pop(block)
+
+	def setTo0Blocks(self) -> tuple:
 		"""
 		Method search way where are not any monster seen and set monsters.
 		Returns:
@@ -226,7 +250,7 @@ class Solve:
 		output = sum([list(self.getAllSeenBlocks(direction, axis)) for direction, axis in zeroBlocks], [])
 		return tuple(set((b[0], b[1], Block.VAMPIRE.value if b[2] == 1 else Block.GHOST.value) for b in output))
 
-	def setToLimitedBlocks(self):
+	def setToLimitedBlocks(self) -> tuple:
 		"""
 		Method search ways were count of seen blocks is greater than seen blocks, and count of already set monsters.
 		If recalculated count of seen monster is equal 0 or length of seen blocks, then create changes for Possible.
@@ -242,7 +266,7 @@ class Solve:
 			):
 			for x, seen in enumerate(seenBoard):
 				seenBlocks = list(self.getAllSeenBlocks(direction, x))
-				for block in seenBlocks:
+				for block in copy.deepcopy(seenBlocks):
 					blockType = Block(self.Board._map[block[1]][block[0]])
 					if blockType is not Block.EMPTY:
 						if block[2] == 0:
@@ -258,15 +282,13 @@ class Solve:
 					for x in seenBlocks:
 						data.append((x[0], x[1], [Block.ZOMBIE.value, Block.GHOST.value if x[2] == 1 else Block.VAMPIRE.value]))
 		output = []
-		for d in data:
-			possible = set(d[2])
-			similarBlocks = [x for x in data if (x[0], x[1]) == (d[0], d[1])]
-			for similar in similarBlocks:
+		for d in list(set((x[0], x[1]) for x in data)):
+			similarBlocks = [x for x in data if (x[0], x[1]) == d]
+			possible = set(similarBlocks[0][2])
+			for similar in similarBlocks[1:]:
 				possible &= set(similar[2])
-				data.remove(similar)
 			output.append((d[0], d[1], set(possible)))
 		return tuple(output)
-
 
 
 
