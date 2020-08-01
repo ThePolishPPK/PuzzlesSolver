@@ -218,6 +218,18 @@ class Solve:
 			else:
 				self.Possible[possible[0]] = list(possible[1])
 
+	def appendNewMonster(self, monster: Block, block: tuple):
+		"""
+		Method add monster to board and decrease available monsters to set.
+		"""
+		self.Board._map[block[1]][block[0]] = monster.value
+		if monster == Block.VAMPIRE:
+			self.Vampires -= 1
+		elif monster == Block.ZOMBIE:
+			self.Zombies -= 1
+		elif monster == Block.GHOST:
+			self.Ghosts -= 1
+
 	def searchAndSetOnlyOnePossible(self):
 		"""
 		Method search only once possible monster to set from Possible list and set them to board.
@@ -225,7 +237,7 @@ class Solve:
 		toRemove = []
 		for block, monsters in self.Possible.items():
 			if len(monsters) == 1:
-				self.Board._map[block[1]][block[0]] = monsters[0]
+				self.appendNewMonster(Block(monsters[0]), block)
 				toRemove.append(block)
 		for block in toRemove:
 			self.Possible.pop(block)
@@ -290,7 +302,23 @@ class Solve:
 			output.append((d[0], d[1], set(possible)))
 		return tuple(output)
 
-
+	def removeEndedMonsters(self):
+		"""
+		Method check count of available monsters and removes monster from Possibles if his available is equal 0.
+		"""
+		monstersToRemove = []
+		if self.Vampires == 0:
+			monstersToRemove.append(Block.VAMPIRE.value)
+		if self.Ghosts == 0:
+			monstersToRemove.append(Block.GHOST.value)
+		if self.Zombies == 0:
+			monstersToRemove.append(Block.ZOMBIE.value)
+		if len(monstersToRemove) != 0:
+			for block, monsters in self.Possible.items():
+				for monster in monstersToRemove:
+					if monster in monsters:
+						monsters.remove(monster)
+				self.Possible[block] = monsters
 
 
 
