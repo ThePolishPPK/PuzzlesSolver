@@ -166,6 +166,24 @@ class Solve:
 				if board._map[y][x] == Block.EMPTY:
 					self.Possible[(x, y)] = copy.deepcopy(allAvailableMonsters)
 
+	def solveBoard(self):
+		"""
+		Method exectue all steps to solve board.
+		"""
+		self.appendNewPossibles([((x[0], x[1]), {x[2]}) for x in self.setTo0Blocks()])
+
+		changed = set()
+		change = 0
+		while change not in changed:
+			change = hash((tuple(sum(self.Board._map, [])), ((x[0], tuple(x[1]) for x in self.Possible.items())))
+			changed.add(change)
+
+			self.searchAndSetOnlyOnePossible()
+			self.appendNewPossibles([((x[0], x[1]), x[2]) for x in self.setToLimitedBlocks()])
+			self.removeEndedMonsters()
+		# To Do: Add randomization method
+		return self.Board
+
 	def getAllSeenBlocks(self, direction: Direction, axisValue: int) -> tuple:
 		"""
 		Method get all blocks seen from specifed direction and location on board.
