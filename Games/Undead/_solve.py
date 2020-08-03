@@ -1,4 +1,4 @@
-import re, copy, enum
+import re, copy, enum, random
 
 class Block(enum.Enum):
 	EMPTY = 0
@@ -99,9 +99,71 @@ class Board:
 		output = " "
 		for (index, value) in enumerate(x for x in sum(self._map, []) if Block(x) in (Block.VAMPIRE, Block.ZOMBIE, Block.GHOST, Block.EMPTY)):
 			output += 'V' if value == Block.VAMPIRE else ('Z' if value == Block.ZOMBIE else ('G' if value == Block.GHOST else 'N'))
-			output += str(index+1)
+			output += str(index)
 			output += ";"
 		return output[1:-1]
+
+	def getAllSeenBlocks(self, direction: Direction, axisValue: int) -> tuple:
+		"""
+		Method get all blocks seen from specifed direction and location on board.
+
+		Parameters:
+			direction (Direction): Direction define from you are looking.
+			axisValue (int): Value of x on look axis.
+
+		Returns:
+			tuple: Tuple of tuples with location and status after first mirror. Schema: ((<x>, <y>, <0 if before first mirror else 1>), ...)
+		"""
+		assert type(direction) == Direction
+		assert type(axisValue) == int and axisValue >= 0 and axisValue < (self.Width if Direction(direction) in (Direction.TOP, Direction.BOTTOM) else self.Height)
+
+		blocks = []
+
+		x = self.Width-1 if direction == Direction.RIGHT else (0 if direction == Direction.LEFT else axisValue )
+		y = self.Height-1 if direction == Direction.BOTTOM else (0 if direction == Direction.TOP else axisValue )
+		yInc = 1 if direction == Direction.TOP else (-1 if direction == Direction.BOTTOM else 0)
+		xInc = 1 if direction == Direction.LEFT else (-1 if direction == Direction.RIGHT else 0)
+		afterMirror = False
+
+		while x in range(0, self.Width) and y in range(0, self.Height):
+			if Block(self._map[y][x]) in (Block.MIRROR_LEFT, Block.MIRROR_RIGHT):
+				if xInc == 0:
+					xInc, yInc = yInc, 0
+				else:
+					yInc, xInc = xInc, 0
+				if Block(self._map[y][x]) is Block.MIRROR_RIGHT:
+					if yInc == 0:
+						xInc *= -1
+					else:
+						yInc *= -1
+				afterMirror = True
+			else:
+				blocks.append((x, y, 1 if afterMirror else 0))
+			x += xInc
+			y += yInc
+		return tuple(blocks)
+
+	def isValid(self) -> bool:
+		"""
+		Method check validity of Board.
+		Returns:
+			bool: True if Board is valid else False.
+		"""
+		for direction, seenBoard in (
+				(Direction.TOP, self.SeenFromTop),
+				(Direction.BOTTOM, self.SeenFromBottom),
+				(Direction.LEFT, self.SeenFromLeft),
+				(Direction.RIGHT, self.SeenFromRight),
+			):
+			for x in range(len(seenBoard)):
+				blocks = self.getAllSeenBlocks(direction, x)
+				see = 0
+				for block in blocks:
+					if self._map[block[1]][block[0]] in (Block.ZOMBIE, Block.VAMPIRE if block[2] == 0 else Block.GHOST):
+						see += 1
+				if see != seenBoard[x]:
+					return False
+		return True
 
 	def copy(self) -> 'Board':
 		"""
@@ -175,54 +237,17 @@ class Solve:
 		changed = set()
 		change = 0
 		while change not in changed:
-			change = hash((tuple(sum(self.Board._map, [])), ((x[0], tuple(x[1]) for x in self.Possible.items())))
 			changed.add(change)
 
 			self.searchAndSetOnlyOnePossible()
 			self.appendNewPossibles([((x[0], x[1]), x[2]) for x in self.setToLimitedBlocks()])
 			self.removeEndedMonsters()
-		# To Do: Add randomization method
+
+			change = hash((tuple(sum(self.Board._map, [])), ((x[0], tuple(x[1])) for x in self.Possible.items())))
+
+		if 0 in sum(self.Board._map, []):
+			return self.random()
 		return self.Board
-
-	def getAllSeenBlocks(self, direction: Direction, axisValue: int) -> tuple:
-		"""
-		Method get all blocks seen from specifed direction and location on board.
-
-		Parameters:
-			direction (Direction): Direction define from you are looking.
-			axisValue (int): Value of x on look axis.
-
-		Returns:
-			tuple: Tuple of tuples with location and status after first mirror. Schema: ((<x>, <y>, <0 if before first mirror else 1>), ...)
-		"""
-		assert type(direction) == Direction
-		assert type(axisValue) == int and axisValue >= 0 and axisValue < (self.Board.Width if Direction(direction) in (Direction.TOP, Direction.BOTTOM) else self.Board.Height)
-
-		blocks = []
-
-		x = self.Board.Width-1 if direction == Direction.RIGHT else (0 if direction == Direction.LEFT else axisValue )
-		y = self.Board.Height-1 if direction == Direction.BOTTOM else (0 if direction == Direction.TOP else axisValue )
-		yInc = 1 if direction == Direction.TOP else (-1 if direction == Direction.BOTTOM else 0)
-		xInc = 1 if direction == Direction.LEFT else (-1 if direction == Direction.RIGHT else 0)
-		afterMirror = False
-
-		while x in range(0, self.Board.Width) and y in range(0, self.Board.Height):
-			if Block(self.Board._map[y][x]) in (Block.MIRROR_LEFT, Block.MIRROR_RIGHT):
-				if xInc == 0:
-					xInc, yInc = yInc, 0
-				else:
-					yInc, xInc = xInc, 0
-				if Block(self.Board._map[y][x]) is Block.MIRROR_RIGHT:
-					if yInc == 0:
-						xInc *= -1
-					else:
-						yInc *= -1
-				afterMirror = True
-			else:
-				blocks.append((x, y, 1 if afterMirror else 0))
-			x += xInc
-			y += yInc
-		return tuple(blocks)
 
 	def appendNewPossibles(self, possibles: tuple):
 		"""
@@ -240,6 +265,14 @@ class Solve:
 		"""
 		Method add monster to board and decrease available monsters to set.
 		"""
+		already = self.Board._map[block[1]][block[0]]
+		if already == Block.VAMPIRE.value:
+			self.Vampires += 1
+		elif already == Block.ZOMBIE.value:
+			self.Zombies += 1
+		elif already == Block.GHOST.value:
+			self.Ghosts += 1
+
 		self.Board._map[block[1]][block[0]] = monster.value
 		if monster == Block.VAMPIRE:
 			self.Vampires -= 1
@@ -247,18 +280,15 @@ class Solve:
 			self.Zombies -= 1
 		elif monster == Block.GHOST:
 			self.Ghosts -= 1
+		self.Possible.pop(block)
 
 	def searchAndSetOnlyOnePossible(self):
 		"""
 		Method search only once possible monster to set from Possible list and set them to board.
 		"""
-		toRemove = []
-		for block, monsters in self.Possible.items():
+		for block, monsters in copy.deepcopy(tuple(self.Possible.items())):
 			if len(monsters) == 1:
 				self.appendNewMonster(Block(monsters[0]), block)
-				toRemove.append(block)
-		for block in toRemove:
-			self.Possible.pop(block)
 
 	def setTo0Blocks(self) -> tuple:
 		"""
@@ -277,7 +307,7 @@ class Solve:
 				for block_id, block in enumerate(seenBoard):
 					if block == 0:
 						zeroBlocks.append((direction, block_id))
-		output = sum([list(self.getAllSeenBlocks(direction, axis)) for direction, axis in zeroBlocks], [])
+		output = sum([list(self.Board.getAllSeenBlocks(direction, axis)) for direction, axis in zeroBlocks], [])
 		return tuple(set((b[0], b[1], Block.VAMPIRE.value if b[2] == 1 else Block.GHOST.value) for b in output))
 
 	def setToLimitedBlocks(self) -> tuple:
@@ -295,7 +325,7 @@ class Solve:
 				(Direction.RIGHT, self.Board.SeenFromRight),
 			):
 			for x, seen in enumerate(seenBoard):
-				seenBlocks = list(self.getAllSeenBlocks(direction, x))
+				seenBlocks = list(self.Board.getAllSeenBlocks(direction, x))
 				for block in copy.deepcopy(seenBlocks):
 					blockType = Block(self.Board._map[block[1]][block[0]])
 					if blockType is not Block.EMPTY:
@@ -338,7 +368,20 @@ class Solve:
 						monsters.remove(monster)
 				self.Possible[block] = monsters
 
+	def random(self) -> Board:
+		"""
+		Method set random monster on one block and solve board.
 
+		Returns:
+			Board: Solved Board object.
+		"""
+		block = random.choice(tuple(self.Possible.keys()))
+		for value in self.Possible[block]:
+			solve = Solve(self.Board.copy())
+			solve.Possible = copy.deepcopy(self.Possible)
 
-
-
+			solve.appendNewMonster(Block(value), block)
+			solved = solve.solveBoard()
+			if solved.isValid():
+				return solved
+		return self.Board
