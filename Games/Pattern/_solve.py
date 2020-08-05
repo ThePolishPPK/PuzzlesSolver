@@ -1,4 +1,4 @@
-import enum
+import enum, re
 
 class BlockType(enum.Enum):
 	"""
@@ -17,7 +17,7 @@ class Block:
 		y (int): Y position on y axis.
 		type (BlockType): Type of block.
 	"""
-	def _init_(self, x: int, y: int, blockType: BlockType):
+	def __init__(self, x: int, y: int, blockType: BlockType):
 		"""
 		Constructor for Block class.
 
@@ -46,6 +46,11 @@ class Board:
 		inRow (tuple): Session of black blocks in row. Schema: ((<int>, ...), ...)
 		inColumn (tuple): Session of black blocks in column. Schema: ((<int>, ...), ...)
 	"""
+
+	_gameIDRegex = re.compile(
+			r"^(?P<width>[0-9]+)x(?P<height>[0-9]+):(([0-9]+\.?)+(\/|$))+$"
+		)
+
 	def __init__(self, width: int, height: int):
 		"""
 		Constructor for Board class.
@@ -58,6 +63,47 @@ class Board:
 		assert type(height) == int and height > 0
 		self.Width = width
 		self.Height = height
-		self._map = tuple( tuple(Block(x, y, BlockType.EMPTY
+		self._map = tuple( tuple(Block(x, y, BlockType.EMPTY)
 				for x in range(self.Width)
-			) for y in range(self.Height) )
+			) for y in range(self.Height)
+		)
+		self.inRow = ( tuple() for _ in range(self.Height) )
+		self.inColumn = ( tuple() for _ in range(self.Width) )
+
+	@property
+	def columnMap(self):
+		return tuple( tuple( self._map[y][x]
+				for y in range(self.Height)
+			) for x in range(self.Width) )
+
+	@property
+	def rowMap(self):
+		return self._map
+
+	@classmethod
+	def parseGameID(cls, gameID: str):
+		"""
+		Method parse game id to Board object.
+		Parameters:
+			gameID (str): GameID string. eg."3x3:1.1/1/1/1/1/2"
+		"""
+		assert type(gameID) == str and cls._gameIDRegex.search(gameID) is not None
+		data = cls._gameIDRegex.search(gameID)
+		width = int(data.group("width"))
+		height = int(data.group("height"))
+		assert width+height == gameID.count("/")+1
+		board = cls(width, height)
+		blockSessions = [
+				tuple( int(y) for y in x.split(".") )
+				for x in gameID.split(":")[1].split("/")
+			]
+		board.inRow = tuple(blockSessions[width:])
+		board.inColumn = tuple(blockSessions[:width])
+		return board
+
+
+
+
+
+
+
