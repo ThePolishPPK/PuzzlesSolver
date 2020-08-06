@@ -101,7 +101,34 @@ class Board:
 		board.inColumn = tuple(blockSessions[:width])
 		return board
 
+	def isValid(self) -> bool:
+		"""
+		Method check validity of board.
 
+		Returns:
+			bool: Validity status, True if valid else False
+		"""
+		rows = [(self.rowMap[y], self.inRow[y]) for y in range(self.Height)]
+		cols = [(self.columnMap[y], self.inColumn[y]) for y in range(self.Height)]
+		for line, blocks in sum([rows, cols], []):
+			integerLine = list(map(lambda l: l.type.value, line))
+			try:
+				index = integerLine.index(BlockType.BLACK.value)
+			except:
+				if len(blocks) > 0:
+					return False
+
+			for blockSession in blocks:
+				if index+blockSession < len(line) and line[index+blockSession] is BlockType.BLACK:
+					return False
+				if integerLine[index:index+blockSession].count(BlockType.BLACK.value) != blockSession:
+					return False
+				try:
+					index = integerLine.index(BlockType.BLACK.value, index+blockSession)
+				except:
+					if blockSession is not blocks[-1]:
+						return False
+		return True
 
 
 
