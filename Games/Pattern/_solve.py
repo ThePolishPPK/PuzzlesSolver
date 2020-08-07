@@ -1,4 +1,4 @@
-import enum, re
+import enum, re, copy
 
 class BlockType(enum.Enum):
 	"""
@@ -101,6 +101,17 @@ class Board:
 		board.inColumn = tuple(blockSessions[:width])
 		return board
 
+	def getLineData(self) -> tuple:
+		"""
+		Method create data set with line and block sessions on those line.
+
+		Returns:
+			tuple: Tuple collection in schema: (((<Block>, ...), (<int>, ...)), ...)
+		"""
+		rows = [(self.rowMap[y], self.inRow[y]) for y in range(self.Height)]
+		cols = [(self.columnMap[y], self.inColumn[y]) for y in range(self.Height)]
+		return sum([rows, cols], [])
+
 	def isValid(self) -> bool:
 		"""
 		Method check validity of board.
@@ -108,9 +119,7 @@ class Board:
 		Returns:
 			bool: Validity status, True if valid else False
 		"""
-		rows = [(self.rowMap[y], self.inRow[y]) for y in range(self.Height)]
-		cols = [(self.columnMap[y], self.inColumn[y]) for y in range(self.Height)]
-		for line, blocks in sum([rows, cols], []):
+		for line, blocks in self.getLineData():
 			integerLine = list(map(lambda l: l.type.value, line))
 			try:
 				index = integerLine.index(BlockType.BLACK.value)
@@ -129,6 +138,77 @@ class Board:
 					if blockSession is not blocks[-1]:
 						return False
 		return True
+
+class Solve:
+	"""
+	Attributes:
+		Board (Board): Board object what shoud be solved.
+	"""
+	def __init__(self, board: Board):
+		assert type(board) is Board
+		self.Board = board
+
+	def searchHardBlocks(self):
+		# To Do: Rewite that code. It's foul
+		output = []
+		for line, blocks in self.Board.getLineData():
+			mapLine = [[]]
+			for element in line:
+				if element.type in (BlockType.BLACK, BlockType.EMPTY):
+					mapLine[-1].append(element)
+				else:
+					if len(mapLine[-1]) != 0:
+						mapLine.append([])
+			right = copy.copy(mapLine)
+			left = copy.copy(mapLine)
+			hardBlocks = dict()
+
+			for x, block in enumerate(blocks):
+				hardBlocks[x] = [0]*len(line)
+				try:
+					caseIndex, case = next(filter(lambda y: len(y[1]) >= block, enumerate(left)))
+				except:
+					pass
+				else:
+					for bl in case[0:block]:
+						hardBlocks[x][line.index(bl)] += 0.5
+					left[caseIndex] = case[block+1:]
+
+			for x, block in list(enumerate(blocks))[::-1]:
+				try:
+					caseIndex, case = list(filter(lambda y: len(y[1]) >= block, enumerate(right)))[-1]
+				except:
+					pass
+				else:
+					for bl in case[-block:]:
+						hardBlocks[x][line.index(bl)] += 0.5
+					right[caseIndex] = case[0:-block-1]
+				for x in range(len(line)):
+					if len(tuple(y[x] for y in hardBlocks.values() if y[x] >= 1.0)) > 0:
+						output.append(((line[x].x, line[x].y), BlockType.BLACK))
+		return output
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
