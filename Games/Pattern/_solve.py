@@ -139,6 +139,18 @@ class Board:
 						return False
 		return True
 
+	def __str__(self) -> str:
+		output = []
+		for l in self._map:
+			output.append(''.join([
+				(
+					"B " if x.type == BlockType.BLACK else
+					"W " if x.type == BlockType.WHITE else
+					"E "
+				) for x in l
+			]))
+		return '\n'.join(output)
+
 class Solve:
 	"""
 	Attributes:
@@ -149,16 +161,14 @@ class Solve:
 		self.Board = board
 
 	def searchHardBlocks(self):
-		# To Do: Rewite that code. It's foul
+		"""
+		Method search blocks what is static without looking on block session offset (max and min).
+		Returns:
+			tuple: Collection with point and block to set. Schema: (((<x>, <y>), BlockType.BLACK), ...)
+		"""
 		output = []
 		for line, blocks in self.Board.getLineData():
-			mapLine = [[]]
-			for element in line:
-				if element.type in (BlockType.BLACK, BlockType.EMPTY):
-					mapLine[-1].append(element)
-				else:
-					if len(mapLine[-1]) != 0:
-						mapLine.append([])
+			mapLine = self._mapSessionOnLine(line)
 			right = copy.copy(mapLine)
 			left = copy.copy(mapLine)
 			hardBlocks = dict()
@@ -185,10 +195,47 @@ class Solve:
 					right[caseIndex] = case[0:-block-1]
 				for x in range(len(line)):
 					if len(tuple(y[x] for y in hardBlocks.values() if y[x] >= 1.0)) > 0:
-						output.append(((line[x].x, line[x].y), BlockType.BLACK))
-		return output
+						if line[x].type is BlockType.EMPTY:
+							output.append(((line[x].x, line[x].y), BlockType.BLACK))
+				globalLine = [0]*len(line)
+				for ln in hardBlocks.values():
+					if len(list(filter(lambda x: x >= 1, ln))) > 0:
+						for x in range(len(line)):
+							globalLine[x] += ln[x]
+					else:
+						break
+				else:
+					for x in range(len(line)):
+						if globalLine[x] == 0:
+							if line[x].type is BlockType.EMPTY:
+								output.append(((line[x].x, line[x].y), BlockType.WHITE))
+		return tuple(set(output))
 
+	def appendBlocks(self, blocks: tuple):
+		"""
+		Method append blocks to board.
 
+		Parameters:
+			blocks (tuple): Tuple with blocks data. Schema: (((<x>, <y>), <BlockType>), ...)
+		"""
+		assert type(blocks) == tuple
+		for el in blocks:
+			assert type(el[0]) == tuple and type(el[0][0]) == int and type(el[0][1]) == int
+			assert type(el[1]) == BlockType
+
+		for pos, blType in blocks:
+			self.Board.rowMap[pos[1]][pos[0]].type = blType
+
+	@staticmethod
+	def _mapSessionOnLine(line):
+		mapLine = [[]]
+		for element in line:
+			if element.type in (BlockType.BLACK, BlockType.EMPTY):
+				mapLine[-1].append(element)
+			else:
+				if len(mapLine[-1]) != 0:
+					mapLine.append([])
+		return mapLine
 
 
 
