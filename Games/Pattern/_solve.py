@@ -33,6 +33,14 @@ class Block:
 		self.y = y
 		self.type = blockType
 
+	def __repr__(self) -> str:
+		return "<Block x={} y={} type={}>".format(
+			self.x,
+			self.y,
+			"Black" if self.type is BlockType.BLACK else
+				"White" if self.type is BlockType.WHITE else "Empty",
+		)
+
 class Board:
 	"""
 	Class represent board with blocks.
@@ -111,6 +119,18 @@ class Board:
 		rows = [(self.rowMap[y], self.inRow[y]) for y in range(self.Height)]
 		cols = [(self.columnMap[y], self.inColumn[y]) for y in range(self.Height)]
 		return sum([rows, cols], [])
+
+	def exportToBinary(self) -> str:
+		"""
+		Method save blocks to binary representation.
+
+		Returns:
+			str: String with binary.
+		"""
+		output  = ""
+		for x in sum([list(x) for x in self._map], []):
+			output += "1" if x.type is BlockType.BLACK else "0"
+		return output
 
 	def isValid(self) -> bool:
 		"""
@@ -225,6 +245,35 @@ class Solve:
 
 		for pos, blType in blocks:
 			self.Board.rowMap[pos[1]][pos[0]].type = blType
+
+	def searchCompletedLines(self) -> tuple:
+		"""
+		Method search lines were dependences are completed and collect other blocks in line to data set.
+
+		Returns:
+			tuple: Tuple with blocks data.
+		"""
+		output = []
+		for line, blocks in self.Board.getLineData():
+			lineTypes = tuple(map(lambda x: x.type, line))
+			if BlockType.BLACK not in lineTypes:
+				continue
+			index = lineTypes.index(BlockType.BLACK)
+			for blID, block in enumerate(blocks):
+				if (lineTypes[index:index+block].count(BlockType.BLACK) == block
+					and (index+block+1 >= len(line) or lineTypes[index+block] is not BlockType.BLACK)):
+					try:
+						index = lineTypes.index(BlockType.BLACK, index+block)
+					except ValueError:
+						if blID != len(blocks)-1:
+							break
+				else:
+					break
+			else:
+				for bl in line:
+					if bl.type == BlockType.EMPTY:
+						output.append(((bl.x, bl.y), BlockType.WHITE))
+		return tuple(set(output))
 
 	@staticmethod
 	def _mapSessionOnLine(line):
