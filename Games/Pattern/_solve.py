@@ -171,6 +171,56 @@ class Board:
 			]))
 		return '\n'.join(output)
 
+	def exportGameID(self) -> str:
+		"""
+		Method parse Board info and create GameID.
+
+		Returns:
+			str: String representing GameID.
+		"""
+		output = str(self.Width)+"x"+str(self.Height)+":"
+		sessions = []
+		for x in list(self.inRow) + list(self.inColumn):
+			sessions.append('.'.join([
+				str(q) for q in x
+			]))
+		output += '/'.join(sessions)
+		return output
+
+	def exportInSaveSchema(self) -> str:
+		"""
+		Method parse Board to save file.
+		Returns:
+			str: String save file.
+		"""
+		board = self.columnMap
+		boardSize, gameID, *_ = self.exportGameID().split(":")
+		output = "\n".join([
+			"SAVEFILE:41:Simon Tatham's Portable Puzzle Collection",
+			"VERSION :1:1",
+			"GAME    :7:Pattern",
+			("PARAMS  :%i:"%len(boardSize))+boardSize,
+			("CPARAMS :%i:"%len(boardSize))+boardSize,
+			("DESC    :%i:"%len(gameID))+gameID
+		])
+		moves = []
+		for colID, col in enumerate(board):
+			index = 0
+			for x in range(1, len(col)):
+				if x >= len(col) or col[x].type is not col[index].type:
+					if col[index].type is not BlockType.EMPTY:
+						d = ("F" if col[index].type is BlockType.BLACK else "E")+str(colID)+","+str(index)+",1,"+str(x-index)
+						moves.append(
+							(":%i:"%len(d))+d
+						)
+					index = x
+					continue
+		pos = str(len(moves)+1)
+		output += "\nNSTATES :{lp}:{p}\nSTATEPOS:{lp}:{p}\n".format(p=pos, lp=len(pos))
+		for m in moves:
+			output += "MOVE    {}\n".format(m)
+		return output
+
 class Solve:
 	"""
 	Attributes:
