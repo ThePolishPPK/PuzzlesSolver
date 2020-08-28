@@ -2,12 +2,19 @@
 #include "Type.cpp"
 #include <assert.h>
 
-Board Board::parseGameID(std::string gameID) {
+game::Block game::Board::getBoardBlock(uint8_t x, uint8_t y) {
+    assert(x >= 0 and x < this->Width);
+    assert(y >= 0 and y < this->Height);
+
+    return this->_map[y][x];
+}
+
+game::Board game::Board::parseGameID(std::string gameID) {
     bool previusSegmentsAreOK = true;
     std::vector<std::vector<int>> seenMonsters(4);
 
     std::smatch localStringMatch;
-    Board board = Board(1,1);
+    game::Board board(1,1);
 
     if (previusSegmentsAreOK and std::regex_match(gameID, localStringMatch, std::regex("^([0-9]+)x([0-9]+):.+"))) {
         board = Board((int) (*localStringMatch[1].first.base() - '0'), (int) (*localStringMatch[2].first - '0'));
@@ -72,7 +79,7 @@ Board Board::parseGameID(std::string gameID) {
     throw std::invalid_argument("Parameter {gameID} has invalid structure! \n Expected structure (RegExp): [0-9]+x[0-9]+:([0-9]\\,?)+\\,([a-z]?(L|R)\\,)+([0-9]+\\,)+\nExample: 3x3:2,2,2,bRcRaR,2,2,0,2,2,0,0,2,2,1,2,2");
 }
 
-Board::Board(int width, int height) {
+game::Board::Board(int width, int height) {
     assert(width > 0);
     assert(height > 0);
     this->Height = height;

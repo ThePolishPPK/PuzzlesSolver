@@ -6,26 +6,27 @@
 #include <regex>
 #include "Block.cpp"
 
-class Board
-{
-public:
-    Board(int width, int height);
-    static Board parseGameID(std::basic_string<char> str);
+namespace game {
+    class Board {
+    public:
+        Board(int width, int height);
 
+        static Board parseGameID(std::basic_string<char> str);
+        game::Block getBoardBlock(uint8_t x, uint8_t y);
 
-protected:
-    int Width;
-    int Height;
-    int Vampires;
-    int Zombies;
-    int Ghosts;
-    std::vector<int> SeenFromTop;
-    std::vector<int> SeenFromBottom;
-    std::vector<int> SeenFromLeft;
-    std::vector<int> SeenFromRight;
+        int Width;
+        int Height;
+        int Vampires;
+        int Zombies;
+        int Ghosts;
+        std::vector<int> SeenFromTop;
+        std::vector<int> SeenFromBottom;
+        std::vector<int> SeenFromLeft;
+        std::vector<int> SeenFromRight;
 
-private:
-    std::vector<std::vector<game::Block>> _map;
+    private:
+        std::vector<std::vector<game::Block>> _map;
+    };
 };
 
 #endif
