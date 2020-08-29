@@ -27,6 +27,9 @@ void test() {
             assert(board.getBoardBlock(x, y).BlockType == expectedMapByType[y][x]);
         }
     }
+
+    std::string out = board.exportInSolveFormat();
+    return;
 }
 
 int main() {

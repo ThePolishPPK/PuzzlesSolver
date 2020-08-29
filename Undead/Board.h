@@ -13,6 +13,7 @@ namespace game {
 
         static Board parseGameID(std::basic_string<char> str);
         game::Block getBoardBlock(uint8_t x, uint8_t y);
+        std::string exportInSolveFormat();
 
         int Width;
         int Height;

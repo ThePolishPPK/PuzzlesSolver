@@ -2,6 +2,40 @@
 #include "Type.cpp"
 #include <assert.h>
 
+std::string game::Board::exportInSolveFormat() {
+    std::string output;
+    unsigned int offset = 0;
+    for (unsigned int y=0; y<this->Height; y++) {
+        for (unsigned int x=0; x<this->Width; x++) {
+            char letter = 0;
+            switch (this->_map[y][x].BlockType) {
+                case game::Type::Ghost:
+                    letter = (char&) "G";
+                    break;
+                case game::Type::Vampire:
+                    letter = (char&) "V";
+                    break;
+                case game::Type::Zombie:
+                    letter = (char&) "Z";
+                    break;
+                case game::Type::Empty:
+                    letter = (char&) " ";
+                    break;
+            }
+            if (letter != 0) {
+                for (char c: letter + std::to_string(offset) + ";") {
+                    output.push_back(c);
+                }
+                offset++;
+            }
+        }
+    }
+    if (output.length() == 0) {
+        return std::string("");
+    }
+    return output.substr(0, output.length()-1);
+}
+
 game::Block game::Board::getBoardBlock(uint8_t x, uint8_t y) {
     assert(x >= 0 and x < this->Width);
     assert(y >= 0 and y < this->Height);
@@ -10,25 +44,25 @@ game::Block game::Board::getBoardBlock(uint8_t x, uint8_t y) {
 }
 
 game::Board game::Board::parseGameID(std::string gameID) {
-    bool previusSegmentsAreOK = true;
+    bool previousSegmentsAreOK = true;
     std::vector<std::vector<int>> seenMonsters(4);
 
     std::smatch localStringMatch;
     game::Board board(1,1);
 
-    if (previusSegmentsAreOK and std::regex_match(gameID, localStringMatch, std::regex("^([0-9]+)x([0-9]+):.+"))) {
+    if (previousSegmentsAreOK and std::regex_match(gameID, localStringMatch, std::regex("^([0-9]+)x([0-9]+):.+"))) {
         board = Board((int) (*localStringMatch[1].first.base() - '0'), (int) (*localStringMatch[2].first - '0'));
-    } else previusSegmentsAreOK = false;
+    } else previousSegmentsAreOK = false;
 
 
-    if (previusSegmentsAreOK and std::regex_match(gameID, localStringMatch, std::regex(".+:([0-9]+),([0-9]+),([0-9]+),.+"))) {
+    if (previousSegmentsAreOK and std::regex_match(gameID, localStringMatch, std::regex(".+:([0-9]+),([0-9]+),([0-9]+),.+"))) {
         board.Ghosts = (*localStringMatch[1].first - '0');
         board.Vampires = (*localStringMatch[2].first - '0');
         board.Zombies = (*localStringMatch[3].first - '0');
-    } else previusSegmentsAreOK = false;
+    } else previousSegmentsAreOK = false;
 
 
-    if (previusSegmentsAreOK and
+    if (previousSegmentsAreOK and
         std::regex_search(
                 gameID,
                 localStringMatch,
@@ -53,9 +87,9 @@ game::Board game::Board::parseGameID(std::string gameID) {
         board.SeenFromRight = std::vector<int> (seenMonsters.begin()+board.Width, seenMonsters.begin()+board.Width+board.Height);
         board.SeenFromBottom = std::vector<int> (seenMonsters.rbegin()+board.Height, seenMonsters.rbegin()+board.Height+board.Width);
         board.SeenFromLeft = std::vector<int> (seenMonsters.rbegin(), seenMonsters.rbegin()+board.Height);
-    } else previusSegmentsAreOK = false;
+    } else previousSegmentsAreOK = false;
 
-    if (previusSegmentsAreOK and
+    if (previousSegmentsAreOK and
         std::regex_search(gameID, localStringMatch, std::regex(",([a-z]?(L|R))+[a-z]?,"), std::regex_constants::format_sed)) {
         std::string mirrorsData (localStringMatch[0].first+1, localStringMatch[0].second-1);
 
@@ -70,9 +104,9 @@ game::Board game::Board::parseGameID(std::string gameID) {
             }
             offset += 1;
         }
-    } else previusSegmentsAreOK = false;
+    } else previousSegmentsAreOK = false;
 
-    if (previusSegmentsAreOK) {
+    if (previousSegmentsAreOK) {
         return board;
     }
 
