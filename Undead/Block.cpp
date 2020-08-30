@@ -7,7 +7,7 @@
 namespace game {
     class Block {
     public:
-        Block(int x, int y, const game::Type& type) {
+        Block(int x, int y, game::Type *type) {
             assert(x >= 0);
             assert(y >= 0);
 
@@ -19,7 +19,7 @@ namespace game {
     public:
         int x;
         int y;
-        game::Type BlockType;
+        game::Type* BlockType;
     };
 
 };

@@ -24,11 +24,16 @@ void test() {
 
     for (uint8_t x=0; x<board.Width; x++) {
         for (uint8_t y=0; y<board.Height; y++) {
-            assert(board.getBoardBlock(x, y).BlockType == expectedMapByType[y][x]);
+            assert((game::Type &) board.getBoardBlock(x, y).BlockType == expectedMapByType[y][x]);
         }
     }
 
+    board.getBoardBlock(1, 1).BlockType = (game::Type *) game::Type::Vampire;
+
     std::string out = board.exportInSolveFormat();
+
+    std::vector<game::Block*> blocks = board.getAllSeenBlock(game::Direction::RIGHT, 3);
+
     return;
 }
 

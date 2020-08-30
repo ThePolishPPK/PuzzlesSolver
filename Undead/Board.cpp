@@ -1,6 +1,65 @@
 #include "Board.h"
 #include "Type.cpp"
-#include <assert.h>
+#include <cassert>
+
+std::vector<game::Block*> game::Board::getAllSeenBlock(game::Direction direction, const uint& axisLocation) {
+    int8_t xIncrement(0);
+    int8_t yIncrement(0);
+    uint16_t x(0);
+    uint16_t y(0);
+    std::vector<game::Block*> result;
+    game::Block* tempBlock;
+
+    switch (direction) {
+        case game::Direction::LEFT:
+            xIncrement = 1;
+            break;
+        case game::Direction::RIGHT:
+            xIncrement = -1;
+            x = this->Width - 1;
+            break;
+        case game::Direction::DOWN:
+            yIncrement = 1;
+            break;
+        case game::Direction::UP:
+            yIncrement = -1;
+            y = this->Height - 1;
+    }
+
+    if (xIncrement != 0) {
+        y = axisLocation;
+    } else x = axisLocation;
+
+    while  (x >= 0 && x < this->Width &&
+            y >= 0 && y < this->Height) {
+        tempBlock = &this->getBoardBlock(x, y);
+        switch ((game::Type &) tempBlock->BlockType) {
+            case game::Type::MirrorLeft:
+                if (yIncrement == 0) {
+                    yIncrement = xIncrement;
+                    xIncrement = 0;
+                } else {
+                    xIncrement = yIncrement;
+                    yIncrement = 0;
+                }
+                break;
+            case game::Type::MirrorRight:
+                if (yIncrement == 0) {
+                    yIncrement = -xIncrement;
+                    xIncrement = 0;
+                } else {
+                    xIncrement = -yIncrement;
+                    yIncrement = 0;
+                }
+                break;
+            default:
+                result.push_back(tempBlock);
+        }
+        x += xIncrement;
+        y += yIncrement;
+    }
+    return result;
+}
 
 std::string game::Board::exportInSolveFormat() {
     std::string output;
@@ -8,18 +67,18 @@ std::string game::Board::exportInSolveFormat() {
     for (unsigned int y=0; y<this->Height; y++) {
         for (unsigned int x=0; x<this->Width; x++) {
             char letter = 0;
-            switch (this->_map[y][x].BlockType) {
+            switch ((game::Type &) this->_map[y][x].BlockType) {
                 case game::Type::Ghost:
-                    letter = (char&) "G";
+                    letter = 'G';
                     break;
                 case game::Type::Vampire:
-                    letter = (char&) "V";
+                    letter = 'V';
                     break;
                 case game::Type::Zombie:
-                    letter = (char&) "Z";
+                    letter = 'Z';
                     break;
                 case game::Type::Empty:
-                    letter = (char&) " ";
+                    letter = ' ';
                     break;
             }
             if (letter != 0) {
@@ -36,21 +95,20 @@ std::string game::Board::exportInSolveFormat() {
     return output.substr(0, output.length()-1);
 }
 
-game::Block game::Board::getBoardBlock(uint8_t x, uint8_t y) {
+game::Block& game::Board::getBoardBlock(uint8_t x, uint8_t y) {
     assert(x >= 0 and x < this->Width);
     assert(y >= 0 and y < this->Height);
 
     return this->_map[y][x];
 }
 
-game::Board game::Board::parseGameID(std::string gameID) {
+game::Board game::Board::parseGameID(const std::string& gameID) {
     bool previousSegmentsAreOK = true;
-    std::vector<std::vector<int>> seenMonsters(4);
 
     std::smatch localStringMatch;
     game::Board board(1,1);
 
-    if (previousSegmentsAreOK and std::regex_match(gameID, localStringMatch, std::regex("^([0-9]+)x([0-9]+):.+"))) {
+    if (std::regex_match(gameID, localStringMatch, std::regex("^([0-9]+)x([0-9]+):.+"))) {
         board = Board((int) (*localStringMatch[1].first.base() - '0'), (int) (*localStringMatch[2].first - '0'));
     } else previousSegmentsAreOK = false;
 
@@ -71,10 +129,10 @@ game::Board game::Board::parseGameID(std::string gameID) {
     )) {
         std::string seenMonstersLine (localStringMatch[0].first+1, localStringMatch[0].second);
         std::vector<uint8_t> seenMonsters;
-        uint offset=0;
+        uint offset;
 
         for (uint x=0; x<seenMonstersLine.size(); x++) {
-            offset=seenMonstersLine.find(",", x);
+            offset=seenMonstersLine.find(',', x);
             seenMonsters.push_back(
                 std::stoi((std::string) seenMonstersLine.substr(x, offset))
             );
@@ -95,10 +153,10 @@ game::Board game::Board::parseGameID(std::string gameID) {
 
         unsigned int offset = 0;
         for (char chr: mirrorsData) {
-            if (chr == (char &) "R") {
-                board._map[offset / board.Width][offset % board.Height].BlockType = game::Type::MirrorRight;
-            } else if (chr == (char &) "L") {
-                board._map[offset / board.Width][offset % board.Height].BlockType = game::Type::MirrorLeft;
+            if (chr == 'R') {
+                board._map[offset / board.Width][offset % board.Height].BlockType = (game::Type *) game::Type::MirrorRight;
+            } else if (chr == 'L') {
+                board._map[offset / board.Width][offset % board.Height].BlockType = (game::Type *) game::Type::MirrorLeft;
             } else {
                 offset += (int) chr - 97;
             }
@@ -118,10 +176,13 @@ game::Board::Board(int width, int height) {
     assert(height > 0);
     this->Height = height;
     this->Width = width;
+    this->Ghosts = 0;
+    this->Vampires = 0;
+    this->Zombies = 0;
     for (unsigned y=0; y<height; y++) {
         this->_map.emplace_back();
         for (unsigned x=0; x<width; x++) {
-            this->_map[y].push_back(game::Block((int) x, (int) y, game::Type::Empty));
+            this->_map[y].push_back(game::Block((int) x, (int) y, (game::Type *) game::Type::Empty));
         }
     }
 }

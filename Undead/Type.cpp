@@ -1,7 +1,6 @@
 #ifndef TYPE_CLASS
 #define TYPE_CLASS
 
-#include <assert.h>
 #include <cstdint>
 
 namespace game {
