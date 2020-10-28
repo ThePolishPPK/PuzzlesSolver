@@ -1,9 +1,10 @@
-#ifndef TYPE_CLASS
-#define TYPE_CLASS
+#ifndef SGT_UNDEAD_TYPE_CLASS
+#define SGT_UNDEAD_TYPE_CLASS
 
 #include <cstdint>
 
-namespace game {
+namespace sgt {
+namespace undead {
     enum Type : std::uint8_t {
         Empty = 0,
         Ghost = 1,
@@ -12,6 +13,7 @@ namespace game {
         MirrorLeft = 4,
         MirrorRight = 5
     };
+};
 };
 
 #endif

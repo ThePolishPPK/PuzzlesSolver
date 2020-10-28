@@ -1,13 +1,14 @@
-#ifndef BLOCK_CLASS
-#define BLOCK_CLASS
+#ifndef SGT_UNDEAD_BLOCK_CLASS
+#define SGT_UNDEAD_BLOCK_CLASS
 
 #include "Type.cpp"
 #include <assert.h>
 
-namespace game {
+namespace sgt {
+namespace undead {
     class Block {
     public:
-        Block(int x, int y, game::Type type) {
+        Block(int x, int y, Type type) {
             assert(x >= 0);
             assert(y >= 0);
 
@@ -19,9 +20,8 @@ namespace game {
     public:
         int x;
         int y;
-        game::Type BlockType;
+        Type BlockType;
     };
-
 };
-
+};
 #endif

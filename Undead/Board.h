@@ -1,5 +1,5 @@
-#ifndef UNDEAD_BOARD_H
-#define UNDEAD_BOARD_H
+#ifndef SGT_UNDEAD_BOARD_HEADER
+#define SGT_UNDEAD_BOARD_HEADER
 
 #include <vector>
 #include <string>
@@ -7,15 +7,16 @@
 #include "Block.cpp"
 #include "Direction.cpp"
 
-namespace game {
+namespace sgt {
+namespace undead {
     class Board {
     public:
         Board(unsigned int width, unsigned int height);
 
         static Board parseGameID(const std::basic_string<char>& str);
-        game::Block& getBoardBlock(uint8_t x, uint8_t y);
+        Block& getBoardBlock(uint8_t x, uint8_t y);
         std::string exportInSolveFormat();
-        std::pair<std::vector<Block *>, std::vector<bool>> getAllSeenBlock(game::Direction direction, const uint& axisLocation = 0);
+        std::pair<std::vector<Block *>, std::vector<bool>> getAllSeenBlock(Direction direction, const uint& axisLocation = 0);
         bool isValid();
 
         unsigned int Width;
@@ -29,8 +30,9 @@ namespace game {
         std::vector<int> SeenFromRight;
 
     private:
-        std::vector<std::vector<game::Block>> _map;
+        std::vector<std::vector<Block>> _map;
     };
+};
 };
 
 #endif
