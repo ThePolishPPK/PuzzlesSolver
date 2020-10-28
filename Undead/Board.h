@@ -10,18 +10,19 @@
 namespace game {
     class Board {
     public:
-        Board(int width, int height);
+        Board(unsigned int width, unsigned int height);
 
         static Board parseGameID(const std::basic_string<char>& str);
         game::Block& getBoardBlock(uint8_t x, uint8_t y);
         std::string exportInSolveFormat();
-        std::vector<Block *> getAllSeenBlock(game::Direction direction, const uint& axisLocation = 0);
+        std::pair<std::vector<Block *>, std::vector<bool>> getAllSeenBlock(game::Direction direction, const uint& axisLocation = 0);
+        bool isValid();
 
-        int Width;
-        int Height;
-        int Vampires;
-        int Zombies;
-        int Ghosts;
+        unsigned int Width;
+        unsigned int Height;
+        unsigned int Vampires;
+        unsigned int Zombies;
+        unsigned int Ghosts;
         std::vector<int> SeenFromTop;
         std::vector<int> SeenFromBottom;
         std::vector<int> SeenFromLeft;

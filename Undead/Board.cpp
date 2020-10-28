@@ -1,13 +1,46 @@
 #include "Board.h"
 #include "Type.cpp"
 #include <cassert>
+#include <stdexcept>
 
-std::vector<game::Block*> game::Board::getAllSeenBlock(game::Direction direction, const uint& axisLocation) {
+bool game::Board::isValid() {
+    std::vector<std::pair<Direction, std::vector<int>*>> directions = {
+            std::make_pair(Direction::UP, &this->SeenFromTop),
+            std::make_pair(Direction::DOWN, &this->SeenFromBottom),
+            std::make_pair(Direction::LEFT, &this->SeenFromLeft),
+            std::make_pair(Direction::RIGHT, &this->SeenFromRight)
+    };
+    uint16_t seenMonsters;
+    for (uint8_t e=0; e<directions.size(); e++) {
+        for (uint16_t x=0; x<directions[e].second->size(); x++) {
+            seenMonsters = 0;
+            auto seenBlocks = this->getAllSeenBlock(directions[e].first, x);
+            for (uint8_t y=0; y<seenBlocks.first.size(); y++) {
+                if (
+                        (*seenBlocks.first[y]).BlockType == Type::Zombie ||
+                        ((*seenBlocks.first[y]).BlockType == Type::Vampire && seenBlocks.second[y]) ||
+                        ((*seenBlocks.first[y]).BlockType == Type::Ghost && seenBlocks.second[y] == false)
+                    ) {
+                    seenMonsters++;
+                }
+            }
+            if (seenMonsters > (*directions[e].second)[x]) {
+                return false;
+            }
+        }
+        return true;
+    }
+    return true;
+}
+
+std::pair<std::vector<game::Block*>, std::vector<bool>> game::Board::getAllSeenBlock(game::Direction direction, const uint& axisLocation) {
     int8_t xIncrement(0);
     int8_t yIncrement(0);
     uint16_t x(0);
     uint16_t y(0);
-    std::vector<game::Block*> result;
+    bool beforeMirror = true;
+    std::vector<game::Block*> blocksLine;
+    std::vector<bool> blocksBeforeMirror;
     game::Block* tempBlock;
 
     switch (direction) {
@@ -18,10 +51,10 @@ std::vector<game::Block*> game::Board::getAllSeenBlock(game::Direction direction
             xIncrement = -1;
             x = this->Width - 1;
             break;
-        case game::Direction::DOWN:
+        case game::Direction::UP:
             yIncrement = 1;
             break;
-        case game::Direction::UP:
+        case game::Direction::DOWN:
             yIncrement = -1;
             y = this->Height - 1;
     }
@@ -33,7 +66,7 @@ std::vector<game::Block*> game::Board::getAllSeenBlock(game::Direction direction
     while  (x >= 0 && x < this->Width &&
             y >= 0 && y < this->Height) {
         tempBlock = &this->getBoardBlock(x, y);
-        switch ((game::Type &) tempBlock->BlockType) {
+        switch (tempBlock->BlockType) {
             case game::Type::MirrorLeft:
                 if (yIncrement == 0) {
                     yIncrement = xIncrement;
@@ -42,6 +75,7 @@ std::vector<game::Block*> game::Board::getAllSeenBlock(game::Direction direction
                     xIncrement = yIncrement;
                     yIncrement = 0;
                 }
+                beforeMirror = false;
                 break;
             case game::Type::MirrorRight:
                 if (yIncrement == 0) {
@@ -51,14 +85,16 @@ std::vector<game::Block*> game::Board::getAllSeenBlock(game::Direction direction
                     xIncrement = -yIncrement;
                     yIncrement = 0;
                 }
+                beforeMirror = false;
                 break;
             default:
-                result.push_back(tempBlock);
+                blocksLine.push_back(tempBlock);
+                blocksBeforeMirror.push_back(beforeMirror);
         }
         x += xIncrement;
         y += yIncrement;
     }
-    return result;
+    return std::make_pair(blocksLine, blocksBeforeMirror);
 }
 
 std::string game::Board::exportInSolveFormat() {
@@ -67,7 +103,7 @@ std::string game::Board::exportInSolveFormat() {
     for (unsigned int y=0; y<this->Height; y++) {
         for (unsigned int x=0; x<this->Width; x++) {
             char letter = 0;
-            switch ((game::Type &) this->_map[y][x].BlockType) {
+            switch (this->_map[y][x].BlockType) {
                 case game::Type::Ghost:
                     letter = 'G';
                     break;
@@ -79,6 +115,8 @@ std::string game::Board::exportInSolveFormat() {
                     break;
                 case game::Type::Empty:
                     letter = ' ';
+                    break;
+                default:
                     break;
             }
             if (letter != 0) {
@@ -154,9 +192,9 @@ game::Board game::Board::parseGameID(const std::string& gameID) {
         unsigned int offset = 0;
         for (char chr: mirrorsData) {
             if (chr == 'R') {
-                board._map[offset / board.Width][offset % board.Height].BlockType = (game::Type *) game::Type::MirrorRight;
+                board._map[offset / board.Width][offset % board.Height].BlockType = game::Type::MirrorRight;
             } else if (chr == 'L') {
-                board._map[offset / board.Width][offset % board.Height].BlockType = (game::Type *) game::Type::MirrorLeft;
+                board._map[offset / board.Width][offset % board.Height].BlockType = game::Type::MirrorLeft;
             } else {
                 offset += (int) chr - 97;
             }
@@ -171,9 +209,11 @@ game::Board game::Board::parseGameID(const std::string& gameID) {
     throw std::invalid_argument("Parameter {gameID} has invalid structure! \n Expected structure (RegExp): [0-9]+x[0-9]+:([0-9]\\,?)+\\,([a-z]?(L|R)\\,)+([0-9]+\\,)+\nExample: 3x3:2,2,2,bRcRaR,2,2,0,2,2,0,0,2,2,1,2,2");
 }
 
-game::Board::Board(int width, int height) {
-    assert(width > 0);
-    assert(height > 0);
+game::Board::Board(unsigned int width, unsigned int height) {
+    if (width <= 0 || height <= 0) {
+        throw std::invalid_argument("Width must be greater than 0!");
+    }
+    
     this->Height = height;
     this->Width = width;
     this->Ghosts = 0;
@@ -182,7 +222,7 @@ game::Board::Board(int width, int height) {
     for (unsigned y=0; y<height; y++) {
         this->_map.emplace_back();
         for (unsigned x=0; x<width; x++) {
-            this->_map[y].push_back(game::Block((int) x, (int) y, (game::Type *) game::Type::Empty));
+            this->_map[y].push_back(game::Block((int) x, (int) y, (game::Type) game::Type::Empty));
         }
     }
 }
