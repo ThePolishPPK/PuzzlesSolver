@@ -56,7 +56,7 @@ TEST(BoardTest, Constructor) {
     }
 }
 
-TEST(BoardTest, getBoardBlock) {
+TEST(BoardTest, getBlock) {
     // Test created map
     unsigned char x,y;
     Board test(
@@ -67,7 +67,7 @@ TEST(BoardTest, getBoardBlock) {
     
     for (x=0; x<test.Width; x++) {
         for (y=0; y<test.Height; y++) {
-            tempBlock = &test.getBoardBlock(x, y);
+            tempBlock = &test.getBlock(x, y);
             ASSERT_EQ(tempBlock->x, x);
             ASSERT_EQ(tempBlock->y, y);
             ASSERT_EQ(tempBlock->BlockType, Type::Empty);
@@ -84,6 +84,6 @@ TEST(BoardTest, getBoardBlock) {
     };
     
     for (auto i = parameters.begin(); i != parameters.end(); i++) {
-        ASSERT_DEATH(test.getBoardBlock(i->first, i->second), "");
+        ASSERT_DEATH(test.getBlock(i->first, i->second), "");
     }
 }
