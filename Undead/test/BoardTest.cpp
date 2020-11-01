@@ -2,6 +2,7 @@
 #include <math.h>
 #include <gtest/gtest.h>
 #include <stdexcept>
+#include <tuple>
 
 using namespace sgt::undead;
 
@@ -85,5 +86,149 @@ TEST(BoardTest, getBlock) {
     
     for (auto i = parameters.begin(); i != parameters.end(); i++) {
         ASSERT_DEATH(test.getBlock(i->first, i->second), "");
+    }
+}
+
+TEST(BoardTest, parseGameID) {
+    unsigned char x, y;
+	Board tempBoard(1, 1);
+	Block* tempBlock;
+    
+    // Data set
+    std::vector<
+        std::tuple<
+            const char*,
+            std::vector<std::vector<Type>>,
+            std::vector<std::vector<unsigned char>>,
+			std::pair<unsigned char, unsigned char>,
+			std::vector<unsigned char>
+    >> DataSet = {
+        {
+            // GameID
+            "4x4:4,3,2,aRaRdRRLbLaL,1,1,1,2,0,3,2,0,2,1,1,1,0,2,3,0",
+            // Type map
+            {
+                {Type::Empty, Type::MirrorRight, Type::Empty, Type::MirrorRight},
+                {Type::Empty, Type::Empty, Type::Empty, Type::Empty},
+                {Type::MirrorRight, Type::MirrorRight, Type::MirrorLeft, Type::Empty},
+                {Type::Empty, Type::MirrorLeft, Type::Empty, Type::MirrorLeft},
+            },
+            // Seen monsters
+            {
+                {1, 1, 1, 2}, // Top
+                {0, 3, 2, 0}, // Right
+                {1, 1, 1, 2}, // Bottom
+                {0, 3, 2, 0}, // Left
+            },
+			// Board size
+			{4, 4},
+			// Monsters count
+			{4, 3, 2} // [Ghost, Vampire, Zombie]
+        },
+		{
+            "4x4:1,4,4,dRaLRaLcLRR,1,3,2,2,4,0,2,0,0,0,1,4,1,4,0,4",
+            {
+                {Type::Empty, Type::Empty, Type::Empty, Type::Empty},
+                {Type::MirrorRight, Type::Empty, Type::MirrorLeft, Type::MirrorRight},
+                {Type::Empty, Type::MirrorLeft, Type::Empty, Type::Empty},
+                {Type::Empty, Type::MirrorLeft, Type::MirrorRight, Type::MirrorRight},
+            },
+            {
+                {1, 3, 2, 2},
+                {4, 0, 2, 0},
+                {4, 1, 0, 0},
+                {4, 0, 4, 1},
+            },
+			{4, 4},
+			{1, 4, 4}
+        },
+		{
+            "4x4:2,5,4,dLcRaLcLR,2,3,3,3,3,3,0,0,0,2,3,4,2,0,0,3",
+            {
+                {Type::Empty, Type::Empty, Type::Empty, Type::Empty},
+                {Type::MirrorLeft, Type::Empty, Type::Empty, Type::Empty},
+                {Type::MirrorRight, Type::Empty, Type::MirrorLeft, Type::Empty},
+                {Type::Empty, Type::Empty, Type::MirrorLeft, Type::MirrorRight},
+            },
+            {
+                {2, 3, 3, 3},
+                {3, 3, 0, 0},
+                {4, 3, 2, 0},
+                {3, 0, 0, 2},
+            },
+			{4, 4},
+			{2, 5, 4}
+        },
+		{
+            "5x5:8,3,4,aRRRaRdRfLaRLLbR,0,1,3,5,5,4,0,5,3,0,0,3,3,4,0,0,0,4,1,0",
+            {
+                {Type::Empty, Type::MirrorRight, Type::MirrorRight, Type::MirrorRight, Type::Empty},
+                {Type::MirrorRight, Type::Empty, Type::Empty, Type::Empty, Type::Empty},
+                {Type::MirrorRight, Type::Empty, Type::Empty, Type::Empty, Type::Empty},
+                {Type::Empty, Type::Empty, Type::MirrorLeft, Type::Empty, Type::MirrorRight},
+				{Type::MirrorLeft, Type::MirrorLeft, Type::Empty, Type::Empty, Type::MirrorRight}
+            },
+            {
+                {0, 1, 3, 5, 5},
+                {4, 0, 5, 3, 0},
+                {0, 4, 3, 3, 0},
+                {0, 1, 4, 0, 0},
+            },
+			{5, 5},
+			{8, 3, 4}
+        },
+		{
+            "7x7:1,13,12,dRaRcRaLaLaRLRdLaLcLRcLRRRLRbLaRLaLR,4,4,5,2,4,2,5,1,2,3,3,1,2,0,0,0,3,0,0,6,0,0,0,1,5,0,4,4",
+            {
+                {Type::Empty, Type::Empty, Type::Empty, Type::Empty, Type::MirrorRight, Type::Empty, Type::MirrorRight},
+                {Type::Empty, Type::Empty, Type::Empty, Type::MirrorRight, Type::Empty, Type::MirrorLeft, Type::Empty},
+                {Type::MirrorLeft, Type::Empty, Type::MirrorRight, Type::MirrorLeft, Type::MirrorRight, Type::Empty, Type::Empty},
+                {Type::Empty, Type::Empty, Type::MirrorLeft, Type::Empty, Type::MirrorLeft, Type::Empty, Type::Empty},
+				{Type::Empty, Type::MirrorLeft, Type::MirrorRight, Type::Empty, Type::Empty, Type::Empty, Type::MirrorLeft},
+                {Type::MirrorRight, Type::MirrorRight, Type::MirrorRight, Type::MirrorLeft, Type::MirrorRight, Type::Empty, Type::Empty},
+                {Type::MirrorLeft, Type::Empty, Type::MirrorRight, Type::MirrorLeft, Type::Empty, Type::MirrorLeft, Type::MirrorRight}
+            },
+            {
+                {4, 4, 5, 2, 4, 2, 5},
+                {1, 2, 3, 3, 1, 2, 0},
+                {0, 6, 0, 0, 3, 0, 0},
+                {4, 4, 0, 5, 1, 0, 0},
+            },
+			{7, 7},
+			{1, 13, 12}
+        }
+    };
+    
+    for (auto data=DataSet.begin(); data != DataSet.end(); data++) {
+        tempBoard = Board::parseGameID(std::get<0>(*data));
+		auto map = std::get<1>(*data);
+		auto seenMonsters = std::get<2>(*data);
+		auto monstersList = std::get<4>(*data);
+		
+		ASSERT_EQ(tempBoard.Width, std::get<3>(*data).first) << "Wrong board width!";
+		ASSERT_EQ(tempBoard.Height, std::get<3>(*data).second) << "Wrong board height!";
+		ASSERT_EQ(tempBoard.Ghosts, monstersList[0]) << "Wrong Ghosts count!!";
+		ASSERT_EQ(tempBoard.Vampires, monstersList[1]) << "Wrong Vampire count!!";
+		ASSERT_EQ(tempBoard.Zombies, monstersList[2]) << "Wrong Zombie count!!";
+
+		for (x=0; x<tempBoard.Width; x++) {
+			ASSERT_EQ(tempBoard.SeenFromTop[x], seenMonsters[0][x]) << "Wrong count of seen monsters for Top! Column x=" << std::to_string(x) << "!";
+			ASSERT_EQ(tempBoard.SeenFromBottom[x], seenMonsters[2][x]) << "Wrong count of seen monsters for Bottom! Column x=" << std::to_string(x) << "!";
+		}
+		
+		for (y=0; x<tempBoard.Height; y++) {
+			ASSERT_EQ(tempBoard.SeenFromRight[y], seenMonsters[1][y]) << "Wrong count of seen monsters for Right! Row y=" << std::to_string(y) << "!";
+			ASSERT_EQ(tempBoard.SeenFromLeft[y], seenMonsters[3][y]) << "Wrong count of seen monsters for Left! Row y=" << std::to_string(y) << "!";
+		}
+		
+		for (x=0; x<tempBoard.Width; x++) {
+			for (y=0; y<tempBoard.Height; y++) {
+				tempBlock = &tempBoard.getBlock(x, y);
+
+				ASSERT_EQ(tempBlock->BlockType, map[y][x]) << "Wrong Block Type on x=" << std::to_string(x) << " and y=" << std::to_string(y) << "!";
+				ASSERT_EQ(tempBlock->x, x) << "Wrong x coordinate!";
+				ASSERT_EQ(tempBlock->y, y) << "Wrong y coordinate!";
+			}
+		}
     }
 }
