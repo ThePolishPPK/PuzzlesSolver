@@ -1,4 +1,7 @@
 #include "../Board.h"
+#include "../Direction.cpp"
+#include "../Type.cpp"
+#include "../Block.cpp"
 #include <math.h>
 #include <gtest/gtest.h>
 #include <stdexcept>
@@ -231,4 +234,55 @@ TEST(BoardTest, parseGameID) {
 			}
 		}
     }
+}
+
+TEST(BoardTest, getAllSeenBlocks) {
+	std::vector<std::tuple<
+		const char*,
+		std::vector<std::tuple<unsigned char, unsigned char, bool>>,
+		std::pair<unsigned char, Direction>
+	>> DataSet = {
+		{
+			// GameID
+			"4x4:4,2,6,LaLgRLd,4,2,1,2,1,3,1,2,0,2,2,3,2,4,3,3",
+			// List of seen blocks
+			{{0, 2, true}, {1, 2, true}, {3, 1, false}, {1, 0, false}},
+			// Location
+			{2, Direction::LEFT}
+		},
+		{
+			"7x7:7,16,3,aRRRbRLLcRbLLReRRaRLaRaRRRRbRaRgRL,2,1,1,0,5,2,0,0,3,4,0,0,3,0,0,0,0,2,4,2,3,3,2,1,1,3,3,0",
+			{{6, 1, true}, {5, 2, false}, {4, 3, false}, {2, 4, false}, {1, 5, false}, {1, 6, false}},
+			{1, Direction::RIGHT}
+		},
+		{
+			"7x7:8,17,6,LLeLLbLRdLaRbLfLRaLcLRRbRdRLa,2,3,5,0,2,2,6,4,3,2,4,4,1,2,1,0,0,2,4,0,3,3,2,5,0,4,2,3",
+			{{1, 2, false}, {2, 3, false}, {3, 3, false}, {4, 3, false}, {5, 3, false}, {6, 3, false}},
+			{0, Direction::LEFT}
+		},
+		{
+			"7x7:8,14,7,LaRaRbLaLaLaReRaLbRaRLRbLdLbLaRLcLLa,0,5,0,0,4,6,3,3,0,1,0,3,1,4,1,4,3,4,5,2,0,0,2,0,0,4,3,3",
+			{{1, 0, true}, {1, 1, true}, {1, 2, true}, {1, 3, true}, {1, 4, true}, {2, 5, false}, {3, 5, false}},
+			{1, Direction::TOP}
+		},
+		{
+			"5x5:4,6,3,bLaRaRRLRRbRaRLbRLd,0,2,0,1,0,0,4,2,1,3,1,2,2,3,0,0,3,2,0,4",
+			{{1, 6, true}, {1, 6, false}, {2, 6, false}, {3, 6, false}, {4, 6, false}, {5, 6, false}, {6, 6, false}},
+			{1, Direction::BOTTOM}
+		}
+	};
+
+	for (auto data=DataSet.begin(); data!=DataSet.end(); data++) {
+		auto result = Board::parseGameID(std::get<0>(*data)).getAllSeenBlocks(
+			std::get<2>(*data).second,
+			std::get<2>(*data).first
+		);
+		auto path = &std::get<1>(*data);
+		ASSERT_EQ(result.size(), path->size()) << "Invalid seen blocks path!";
+		for (unsigned char i=0; i<path->size(); i++) {
+			ASSERT_EQ(result[i].first->x, std::get<0>(path[i])) << "Invalid x coordinate in " << std::to_string(i) << " seen block!";
+			ASSERT_EQ(result[i].first->y, std::get<1>(path[i])) << "Invalid y coordinate in " << std::to_string(i) << " seen block!";
+			ASSERT_EQ(result[i].second, std::get<3>(path[i])) << "Invalid mirror bypass status!";
+		}
+	}
 }
