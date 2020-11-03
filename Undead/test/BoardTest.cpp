@@ -263,12 +263,12 @@ TEST(BoardTest, getAllSeenBlocks) {
 		{
 			"7x7:8,14,7,LaRaRbLaLaLaReRaLbRaRLRbLdLbLaRLcLLa,0,5,0,0,4,6,3,3,0,1,0,3,1,4,1,4,3,4,5,2,0,0,2,0,0,4,3,3",
 			{{1, 0, true}, {1, 1, true}, {1, 2, true}, {1, 3, true}, {1, 4, true}, {2, 5, false}, {3, 5, false}},
-			{1, Direction::TOP}
+			{1, Direction::UP}
 		},
 		{
 			"5x5:4,6,3,bLaRaRRLRRbRaRLbRLd,0,2,0,1,0,0,4,2,1,3,1,2,2,3,0,0,3,2,0,4",
 			{{1, 6, true}, {1, 6, false}, {2, 6, false}, {3, 6, false}, {4, 6, false}, {5, 6, false}, {6, 6, false}},
-			{1, Direction::BOTTOM}
+			{1, Direction::DOWN}
 		}
 	};
 
@@ -280,9 +280,9 @@ TEST(BoardTest, getAllSeenBlocks) {
 		auto path = &std::get<1>(*data);
 		ASSERT_EQ(result.size(), path->size()) << "Invalid seen blocks path!";
 		for (unsigned char i=0; i<path->size(); i++) {
-			ASSERT_EQ(result[i].first->x, std::get<0>(path[i])) << "Invalid x coordinate in " << std::to_string(i) << " seen block!";
-			ASSERT_EQ(result[i].first->y, std::get<1>(path[i])) << "Invalid y coordinate in " << std::to_string(i) << " seen block!";
-			ASSERT_EQ(result[i].second, std::get<3>(path[i])) << "Invalid mirror bypass status!";
+			ASSERT_EQ(result[i].first->x, std::get<0>((*path)[i])) << "Invalid x coordinate in " << std::to_string(i) << " seen block!";
+			ASSERT_EQ(result[i].first->y, std::get<1>((*path)[i])) << "Invalid y coordinate in " << std::to_string(i) << " seen block!";
+			ASSERT_EQ(result[i].second, std::get<2>((*path)[i])) << "Invalid mirror bypass status!";
 		}
 	}
 }

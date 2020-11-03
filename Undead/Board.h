@@ -11,12 +11,12 @@ namespace sgt {
 namespace undead {
     class Board {
     public:
-        Board(unsigned int width, unsigned int height);
+        Board(char width, char height);
 
         static Board parseGameID(const std::basic_string<char>& str);
-        Block& getBoardBlock(uint8_t x, uint8_t y);
+        Block& getBlock(uint8_t x, uint8_t y);
         std::string exportInSolveFormat();
-        std::pair<std::vector<Block *>, std::vector<bool>> getAllSeenBlock(Direction direction, const uint& axisLocation = 0);
+        std::vector<std::pair<Block *, bool>> getAllSeenBlocks(Direction direction, const uint& axisLocation = 0);
         bool isValid();
 
         unsigned int Width;

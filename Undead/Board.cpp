@@ -16,12 +16,12 @@ namespace undead {
         for (uint8_t e=0; e<directions.size(); e++) {
             for (uint16_t x=0; x<directions[e].second->size(); x++) {
                 seenMonsters = 0;
-                auto seenBlocks = this->getAllSeenBlock(directions[e].first, x);
-                for (uint8_t y=0; y<seenBlocks.first.size(); y++) {
+                auto seenBlocks = this->getAllSeenBlocks(directions[e].first, x);
+				for (auto block=seenBlocks.begin(); block != seenBlocks.end(); block++){
                     if (
-                            (*seenBlocks.first[y]).BlockType == Type::Zombie ||
-                            ((*seenBlocks.first[y]).BlockType == Type::Vampire && seenBlocks.second[y]) ||
-                            ((*seenBlocks.first[y]).BlockType == Type::Ghost && seenBlocks.second[y] == false)
+                            (*block->first).BlockType == Type::Zombie ||
+                            ((*block->first).BlockType == Type::Vampire && block->second) ||
+                            ((*block->first).BlockType == Type::Ghost && block->second == false)
                         ) {
                         seenMonsters++;
                     }
@@ -35,14 +35,13 @@ namespace undead {
         return true;
     }
 
-    std::pair<std::vector<Block*>, std::vector<bool>> Board::getAllSeenBlock(Direction direction, const uint& axisLocation) {
+    std::vector<std::pair<Block *, bool>> Board::getAllSeenBlocks(Direction direction, const uint& axisLocation) {
         int8_t xIncrement(0);
         int8_t yIncrement(0);
         uint16_t x(0);
         uint16_t y(0);
         bool beforeMirror = true;
-        std::vector<Block*> blocksLine;
-        std::vector<bool> blocksBeforeMirror;
+		std::vector<std::pair<Block *, bool>> result;
         Block* tempBlock;
 
         switch (direction) {
@@ -67,7 +66,7 @@ namespace undead {
 
         while  (x >= 0 && x < this->Width &&
                 y >= 0 && y < this->Height) {
-            tempBlock = &this->getBoardBlock(x, y);
+            tempBlock = &this->getBlock(x, y);
             switch (tempBlock->BlockType) {
                 case Type::MirrorLeft:
                     if (yIncrement == 0) {
@@ -90,13 +89,12 @@ namespace undead {
                     beforeMirror = false;
                     break;
                 default:
-                    blocksLine.push_back(tempBlock);
-                    blocksBeforeMirror.push_back(beforeMirror);
+                    result.push_back(std::make_pair(tempBlock, beforeMirror));
             }
             x += xIncrement;
             y += yIncrement;
         }
-        return std::make_pair(blocksLine, blocksBeforeMirror);
+        return result;
     }
 
     std::string Board::exportInSolveFormat() {
@@ -134,11 +132,11 @@ namespace undead {
         }
         return output.substr(0, output.length()-1);
     }
-
-    Block& Board::getBoardBlock(uint8_t x, uint8_t y) {
+    
+    Block& Board::getBlock(uint8_t x, uint8_t y) {
         assert(x >= 0 and x < this->Width);
         assert(y >= 0 and y < this->Height);
-
+        
         return this->_map[y][x];
     }
 
@@ -211,8 +209,8 @@ namespace undead {
         throw std::invalid_argument("Parameter {gameID} has invalid structure! \n Expected structure (RegExp): [0-9]+x[0-9]+:([0-9]\\,?)+\\,([a-z]?(L|R)\\,)+([0-9]+\\,)+\nExample: 3x3:2,2,2,bRcRaR,2,2,0,2,2,0,0,2,2,1,2,2");
     }
 
-    Board::Board(unsigned int width, unsigned int height) {
-        if (width <= 0 || height <= 0) {
+    Board::Board(char width, char height) {
+        if (width <= 0 || height <= 0 || width > 12 || height > 12) {
             throw std::invalid_argument("Width must be greater than 0!");
         }
 
