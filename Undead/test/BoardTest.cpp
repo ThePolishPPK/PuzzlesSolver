@@ -11,203 +11,201 @@ using namespace sgt::undead;
 
 
 TEST(BoardTest, Constructor) {
-    Board obj(10, 5);
+	Board obj(10, 5);
 
-    // Defined board sizes
-    ASSERT_EQ(5, obj.Height) << "Height must be exactly equal second parameter in constructor!";
-    ASSERT_EQ(10, obj.Width) << "Width must be exactly equal first parameter in constructor!";
+	// Defined board sizes
+	ASSERT_EQ(5, obj.Height) << "Height must be exactly equal second parameter in constructor!";
+	ASSERT_EQ(10, obj.Width) << "Width must be exactly equal first parameter in constructor!";
 
-    // Default values
-    EXPECT_EQ(0, obj.Ghosts) << "Ghosts count by default should be 0!";
-    EXPECT_EQ(0, obj.Vampires) << "Vampires count by default should be 0!";
-    EXPECT_EQ(0, obj.Zombies) << "Zombies count by default should be 0!";
+	// Default values
+	EXPECT_EQ(0, obj.Ghosts) << "Ghosts count by default should be 0!";
+	EXPECT_EQ(0, obj.Vampires) << "Vampires count by default should be 0!";
+	EXPECT_EQ(0, obj.Zombies) << "Zombies count by default should be 0!";
 
-    bool throwExcept = false;
-    
-    // Check minimum board size parameters
-    int args[2];
-    for (unsigned char x=0; x<16; x++) {
-        throwExcept = false;
-        args[x%2] = std::rand() % 12;
-        args[(x+1)%2] = (x%5)? 0 : -(std::rand()%12);
-        
-        try {
-            Board(args[0], args[1]);
-        } catch (const std::invalid_argument& err) {
-            throwExcept = true;
-        }
-        ASSERT_TRUE(throwExcept) << "Constructor doesn't throw exception of Width or/and Height lower than 1! Tested for width=" << args[0] << " and height=" << args[1] << "!";
-    }
-    
-    // Check maximum board size parameters
-    for (unsigned char x=0; x<16; x++) {
-        throwExcept = false;
-        args[0] = (std::rand() % 12)+((x%2)? 13 : 1);
-        args[1] = (std::rand() % 12)+(((x+1)%2)? 13 : 1);
-        
-        if (std::rand() % 5 == 0) {
-            args[(x+1)%2] += 13;
-        }
-        
-        try {
-            Board(args[0], args[1]);
-        } catch (const std::invalid_argument& err) {
-            throwExcept = true;
-        }
-        ASSERT_TRUE(throwExcept) << "Maximum Board size that is 12 width and 12 height! Tested for width=" << args[0] << " and height=" << args[1] << "!";
+	bool throwExcept = false;
 
+	// Check minimum board size parameters
+	int args[2];
+	for (unsigned char x=0; x<16; x++) {
+		throwExcept = false;
+		args[x%2] = std::rand() % 12;
+		args[(x+1)%2] = (x%5)? 0 : -(std::rand()%12);
 
-    }
+		try {
+			Board(args[0], args[1]);
+		} catch (const std::invalid_argument& err) {
+			throwExcept = true;
+		}
+		ASSERT_TRUE(throwExcept) << "Constructor doesn't throw exception of Width or/and Height lower than 1! Tested for width=" << args[0] << " and height=" << args[1] << "!";
+	}
+
+	// Check maximum board size parameters
+	for (unsigned char x=0; x<16; x++) {
+		throwExcept = false;
+		args[0] = (std::rand() % 12)+((x%2)? 13 : 1);
+		args[1] = (std::rand() % 12)+(((x+1)%2)? 13 : 1);
+		
+		if (std::rand() % 5 == 0) {
+			args[(x+1)%2] += 13;
+		}
+
+		try {
+			Board(args[0], args[1]);
+		} catch (const std::invalid_argument& err) {
+			throwExcept = true;
+		}
+		ASSERT_TRUE(throwExcept) << "Maximum Board size that is 12 width and 12 height! Tested for width=" << args[0] << " and height=" << args[1] << "!";
+	}
 }
 
 TEST(BoardTest, getBlock) {
-    // Test created map
-    unsigned char x,y;
-    Board test(
-        (std::rand() % 4) + 8,
-        (std::rand() % 4) + 8
-    );
-    Block* tempBlock;
-    
-    for (x=0; x<test.Width; x++) {
-        for (y=0; y<test.Height; y++) {
-            tempBlock = &test.getBlock(x, y);
-            ASSERT_EQ(tempBlock->x, x);
-            ASSERT_EQ(tempBlock->y, y);
-            ASSERT_EQ(tempBlock->BlockType, Type::Empty);
-        }
-    }
-    
-    std::vector<std::pair<char, char>> parameters = {
-        {std::rand()%test.Width, test.Height},
-        {test.Width, std::rand()%test.Height},
-        {-1, 4},
-        {-87, 2},
-        {3, 43},
-        {7, -76}
-    };
-    
-    for (auto i = parameters.begin(); i != parameters.end(); i++) {
-        ASSERT_DEATH(test.getBlock(i->first, i->second), "");
-    }
+	// Test created map
+	unsigned char x,y;
+	Board test(
+		(std::rand() % 4) + 8,
+		(std::rand() % 4) + 8
+	);
+	Block* tempBlock;
+	
+	for (x=0; x<test.Width; x++) {
+		for (y=0; y<test.Height; y++) {
+			tempBlock = &test.getBlock(x, y);
+			ASSERT_EQ(tempBlock->x, x);
+			ASSERT_EQ(tempBlock->y, y);
+			ASSERT_EQ(tempBlock->BlockType, Type::Empty);
+		}
+	}
+	
+	std::vector<std::pair<char, char>> parameters = {
+		{std::rand()%test.Width, test.Height},
+		{test.Width, std::rand()%test.Height},
+		{-1, 4},
+		{-87, 2},
+		{3, 43},
+		{7, -76}
+	};
+	
+	for (auto i = parameters.begin(); i != parameters.end(); i++) {
+		ASSERT_DEATH(test.getBlock(i->first, i->second), "");
+	}
 }
 
 TEST(BoardTest, parseGameID) {
-    unsigned char x, y;
+	unsigned char x, y;
 	Board tempBoard(1, 1);
 	Block* tempBlock;
-    
-    // Data set
-    std::vector<
-        std::tuple<
-            const char*,
-            std::vector<std::vector<Type>>,
-            std::vector<std::vector<unsigned char>>,
+
+	// Data set
+	std::vector<
+		std::tuple<
+			const char*,
+			std::vector<std::vector<Type>>,
+			std::vector<std::vector<unsigned char>>,
 			std::pair<unsigned char, unsigned char>,
 			std::vector<unsigned char>
-    >> DataSet = {
-        {
-            // GameID
-            "4x4:4,3,2,aRaRdRRLbLaL,1,1,1,2,0,3,2,0,2,1,1,1,0,2,3,0",
-            // Type map
-            {
-                {Type::Empty, Type::MirrorRight, Type::Empty, Type::MirrorRight},
-                {Type::Empty, Type::Empty, Type::Empty, Type::Empty},
-                {Type::MirrorRight, Type::MirrorRight, Type::MirrorLeft, Type::Empty},
-                {Type::Empty, Type::MirrorLeft, Type::Empty, Type::MirrorLeft},
-            },
-            // Seen monsters
-            {
-                {1, 1, 1, 2}, // Top
-                {0, 3, 2, 0}, // Right
-                {1, 1, 1, 2}, // Bottom
-                {0, 3, 2, 0}, // Left
-            },
+	>> DataSet = {
+		{
+			// GameID
+			"4x4:4,3,2,aRaRdRRLbLaL,1,1,1,2,0,3,2,0,2,1,1,1,0,2,3,0",
+			// Type map
+			{
+				{Type::Empty, Type::MirrorRight, Type::Empty, Type::MirrorRight},
+				{Type::Empty, Type::Empty, Type::Empty, Type::Empty},
+				{Type::MirrorRight, Type::MirrorRight, Type::MirrorLeft, Type::Empty},
+				{Type::Empty, Type::MirrorLeft, Type::Empty, Type::MirrorLeft},
+			},
+			// Seen monsters
+			{
+				{1, 1, 1, 2}, // Top
+				{0, 3, 2, 0}, // Right
+				{1, 1, 1, 2}, // Bottom
+				{0, 3, 2, 0}, // Left
+			},
 			// Board size
 			{4, 4},
 			// Monsters count
 			{4, 3, 2} // [Ghost, Vampire, Zombie]
-        },
+		},
 		{
-            "4x4:1,4,4,dRaLRaLcLRR,1,3,2,2,4,0,2,0,0,0,1,4,1,4,0,4",
-            {
-                {Type::Empty, Type::Empty, Type::Empty, Type::Empty},
-                {Type::MirrorRight, Type::Empty, Type::MirrorLeft, Type::MirrorRight},
-                {Type::Empty, Type::MirrorLeft, Type::Empty, Type::Empty},
-                {Type::Empty, Type::MirrorLeft, Type::MirrorRight, Type::MirrorRight},
-            },
-            {
-                {1, 3, 2, 2},
-                {4, 0, 2, 0},
-                {4, 1, 0, 0},
-                {4, 0, 4, 1},
-            },
+			"4x4:1,4,4,dRaLRaLcLRR,1,3,2,2,4,0,2,0,0,0,1,4,1,4,0,4",
+			{
+				{Type::Empty, Type::Empty, Type::Empty, Type::Empty},
+				{Type::MirrorRight, Type::Empty, Type::MirrorLeft, Type::MirrorRight},
+				{Type::Empty, Type::MirrorLeft, Type::Empty, Type::Empty},
+				{Type::Empty, Type::MirrorLeft, Type::MirrorRight, Type::MirrorRight},
+			},
+			{
+				{1, 3, 2, 2},
+				{4, 0, 2, 0},
+				{4, 1, 0, 0},
+				{4, 0, 4, 1},
+			},
 			{4, 4},
 			{1, 4, 4}
-        },
+		},
 		{
-            "4x4:2,5,4,dLcRaLcLR,2,3,3,3,3,3,0,0,0,2,3,4,2,0,0,3",
-            {
-                {Type::Empty, Type::Empty, Type::Empty, Type::Empty},
-                {Type::MirrorLeft, Type::Empty, Type::Empty, Type::Empty},
-                {Type::MirrorRight, Type::Empty, Type::MirrorLeft, Type::Empty},
-                {Type::Empty, Type::Empty, Type::MirrorLeft, Type::MirrorRight},
-            },
-            {
-                {2, 3, 3, 3},
-                {3, 3, 0, 0},
-                {4, 3, 2, 0},
-                {3, 0, 0, 2},
-            },
+			"4x4:2,5,4,dLcRaLcLR,2,3,3,3,3,3,0,0,0,2,3,4,2,0,0,3",
+			{
+				{Type::Empty, Type::Empty, Type::Empty, Type::Empty},
+				{Type::MirrorLeft, Type::Empty, Type::Empty, Type::Empty},
+				{Type::MirrorRight, Type::Empty, Type::MirrorLeft, Type::Empty},
+				{Type::Empty, Type::Empty, Type::MirrorLeft, Type::MirrorRight},
+			},
+			{
+				{2, 3, 3, 3},
+				{3, 3, 0, 0},
+				{4, 3, 2, 0},
+				{3, 0, 0, 2},
+			},
 			{4, 4},
 			{2, 5, 4}
-        },
+		},
 		{
-            "5x5:8,3,4,aRRRaRdRfLaRLLbR,0,1,3,5,5,4,0,5,3,0,0,3,3,4,0,0,0,4,1,0",
-            {
-                {Type::Empty, Type::MirrorRight, Type::MirrorRight, Type::MirrorRight, Type::Empty},
-                {Type::MirrorRight, Type::Empty, Type::Empty, Type::Empty, Type::Empty},
-                {Type::MirrorRight, Type::Empty, Type::Empty, Type::Empty, Type::Empty},
-                {Type::Empty, Type::Empty, Type::MirrorLeft, Type::Empty, Type::MirrorRight},
+			"5x5:8,3,4,aRRRaRdRfLaRLLbR,0,1,3,5,5,4,0,5,3,0,0,3,3,4,0,0,0,4,1,0",
+			{
+				{Type::Empty, Type::MirrorRight, Type::MirrorRight, Type::MirrorRight, Type::Empty},
+				{Type::MirrorRight, Type::Empty, Type::Empty, Type::Empty, Type::Empty},
+				{Type::MirrorRight, Type::Empty, Type::Empty, Type::Empty, Type::Empty},
+				{Type::Empty, Type::Empty, Type::MirrorLeft, Type::Empty, Type::MirrorRight},
 				{Type::MirrorLeft, Type::MirrorLeft, Type::Empty, Type::Empty, Type::MirrorRight}
-            },
-            {
-                {0, 1, 3, 5, 5},
-                {4, 0, 5, 3, 0},
-                {0, 4, 3, 3, 0},
-                {0, 1, 4, 0, 0},
-            },
+			},
+			{
+				{0, 1, 3, 5, 5},
+				{4, 0, 5, 3, 0},
+				{0, 4, 3, 3, 0},
+				{0, 1, 4, 0, 0},
+			},
 			{5, 5},
 			{8, 3, 4}
-        },
+		},
 		{
-            "7x7:1,13,12,dRaRcRaLaLaRLRdLaLcLRcLRRRLRbLaRLaLR,4,4,5,2,4,2,5,1,2,3,3,1,2,0,0,0,3,0,0,6,0,0,0,1,5,0,4,4",
-            {
-                {Type::Empty, Type::Empty, Type::Empty, Type::Empty, Type::MirrorRight, Type::Empty, Type::MirrorRight},
-                {Type::Empty, Type::Empty, Type::Empty, Type::MirrorRight, Type::Empty, Type::MirrorLeft, Type::Empty},
-                {Type::MirrorLeft, Type::Empty, Type::MirrorRight, Type::MirrorLeft, Type::MirrorRight, Type::Empty, Type::Empty},
-                {Type::Empty, Type::Empty, Type::MirrorLeft, Type::Empty, Type::MirrorLeft, Type::Empty, Type::Empty},
+			"7x7:1,13,12,dRaRcRaLaLaRLRdLaLcLRcLRRRLRbLaRLaLR,4,4,5,2,4,2,5,1,2,3,3,1,2,0,0,0,3,0,0,6,0,0,0,1,5,0,4,4",
+			{
+				{Type::Empty, Type::Empty, Type::Empty, Type::Empty, Type::MirrorRight, Type::Empty, Type::MirrorRight},
+				{Type::Empty, Type::Empty, Type::Empty, Type::MirrorRight, Type::Empty, Type::MirrorLeft, Type::Empty},
+				{Type::MirrorLeft, Type::Empty, Type::MirrorRight, Type::MirrorLeft, Type::MirrorRight, Type::Empty, Type::Empty},
+				{Type::Empty, Type::Empty, Type::MirrorLeft, Type::Empty, Type::MirrorLeft, Type::Empty, Type::Empty},
 				{Type::Empty, Type::MirrorLeft, Type::MirrorRight, Type::Empty, Type::Empty, Type::Empty, Type::MirrorLeft},
-                {Type::MirrorRight, Type::MirrorRight, Type::MirrorRight, Type::MirrorLeft, Type::MirrorRight, Type::Empty, Type::Empty},
-                {Type::MirrorLeft, Type::Empty, Type::MirrorRight, Type::MirrorLeft, Type::Empty, Type::MirrorLeft, Type::MirrorRight}
-            },
-            {
-                {4, 4, 5, 2, 4, 2, 5},
-                {1, 2, 3, 3, 1, 2, 0},
-                {0, 6, 0, 0, 3, 0, 0},
-                {4, 4, 0, 5, 1, 0, 0},
-            },
+				{Type::MirrorRight, Type::MirrorRight, Type::MirrorRight, Type::MirrorLeft, Type::MirrorRight, Type::Empty, Type::Empty},
+				{Type::MirrorLeft, Type::Empty, Type::MirrorRight, Type::MirrorLeft, Type::Empty, Type::MirrorLeft, Type::MirrorRight}
+			},
+			{
+				{4, 4, 5, 2, 4, 2, 5},
+				{1, 2, 3, 3, 1, 2, 0},
+				{0, 6, 0, 0, 3, 0, 0},
+				{4, 4, 0, 5, 1, 0, 0},
+			},
 			{7, 7},
 			{1, 13, 12}
-        }
-    };
-    
-    for (auto data=DataSet.begin(); data != DataSet.end(); data++) {
-        tempBoard = Board::parseGameID(std::get<0>(*data));
+		}
+	};
+	
+	for (auto data=DataSet.begin(); data != DataSet.end(); data++) {
+		tempBoard = Board::parseGameID(std::get<0>(*data));
 		auto map = std::get<1>(*data);
 		auto seenMonsters = std::get<2>(*data);
 		auto monstersList = std::get<4>(*data);
-		
+
 		ASSERT_EQ(tempBoard.Width, std::get<3>(*data).first) << "Wrong board width!";
 		ASSERT_EQ(tempBoard.Height, std::get<3>(*data).second) << "Wrong board height!";
 		ASSERT_EQ(tempBoard.Ghosts, monstersList[0]) << "Wrong Ghosts count!!";
@@ -218,12 +216,12 @@ TEST(BoardTest, parseGameID) {
 			ASSERT_EQ(tempBoard.SeenFromTop[x], seenMonsters[0][x]) << "Wrong count of seen monsters for Top! Column x=" << std::to_string(x) << "!";
 			ASSERT_EQ(tempBoard.SeenFromBottom[x], seenMonsters[2][x]) << "Wrong count of seen monsters for Bottom! Column x=" << std::to_string(x) << "!";
 		}
-		
+
 		for (y=0; x<tempBoard.Height; y++) {
 			ASSERT_EQ(tempBoard.SeenFromRight[y], seenMonsters[1][y]) << "Wrong count of seen monsters for Right! Row y=" << std::to_string(y) << "!";
 			ASSERT_EQ(tempBoard.SeenFromLeft[y], seenMonsters[3][y]) << "Wrong count of seen monsters for Left! Row y=" << std::to_string(y) << "!";
 		}
-		
+
 		for (x=0; x<tempBoard.Width; x++) {
 			for (y=0; y<tempBoard.Height; y++) {
 				tempBlock = &tempBoard.getBlock(x, y);
@@ -233,7 +231,7 @@ TEST(BoardTest, parseGameID) {
 				ASSERT_EQ(tempBlock->y, y) << "Wrong y coordinate!";
 			}
 		}
-    }
+	}
 }
 
 TEST(BoardTest, getAllSeenBlocks) {

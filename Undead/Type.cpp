@@ -5,14 +5,14 @@
 
 namespace sgt {
 namespace undead {
-    enum Type : std::uint8_t {
-        Empty = 0,
-        Ghost = 1,
-        Vampire = 2,
-        Zombie = 3,
-        MirrorLeft = 4,
-        MirrorRight = 5
-    };
+	enum Type : std::uint8_t {
+		Empty = 0,
+		Ghost = 1,
+		Vampire = 2,
+		Zombie = 3,
+		MirrorLeft = 4,
+		MirrorRight = 5
+	};
 };
 };
 

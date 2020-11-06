@@ -4,5 +4,5 @@
 using namespace sgt::undead;
 
 int main() {
-    return 0;
+	return 0;
 }
