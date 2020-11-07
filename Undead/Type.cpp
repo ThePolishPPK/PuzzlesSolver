@@ -5,7 +5,7 @@
 
 namespace sgt {
 namespace undead {
-	enum Type : std::uint8_t {
+	enum Type : unsigned char {
 		Empty = 0,
 		Ghost = 1,
 		Vampire = 2,

@@ -17,6 +17,17 @@ namespace undead {
 			this->BlockType = type;
 		};
 
+		void changeType(Type type) {
+			assert(type != Type::MirrorLeft and this->BlockType != Type::MirrorLeft);
+			assert(type != Type::MirrorRight and this->BlockType != Type::MirrorRight);
+
+			this->BlockType = type;
+		};
+
+		Type getType() {
+			return this->BlockType;
+		};
+
 	public:
 		int x;
 		int y;
