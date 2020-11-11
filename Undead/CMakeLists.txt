@@ -1,6 +1,19 @@
-cmake_minimum_required(VERSION 3.17)
+cmake_minimum_required(VERSION 3.10)
+
 project(Undead)
 
-set(CMAKE_CXX_STANDARD 20)
+option(CMAKE_BUILD_TYPE Debug)
 
-add_executable(Undead Board.cpp Block.cpp Block.cpp Board.h Type.cpp main.cpp Direction.cpp)
+string(TOLOWER ${PROJECT_NAME} LIBRARY_NAME)
+
+add_library(${LIBRARY_NAME} SHARED Block.cpp Block.h Board.cpp Board.h Direction.cpp Type.cpp Solve.cpp Solve.h)
+add_executable(${PROJECT_NAME} main.cpp)
+
+target_link_libraries(${PROJECT_NAME} ${LIBRARY_NAME})
+
+option(MakeTests "Generate tests for project" OFF)
+
+if (MakeTests)
+	include(GoogleTest)
+	add_subdirectory("test/")
+endif()

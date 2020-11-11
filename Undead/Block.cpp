@@ -8,13 +8,9 @@ namespace sgt {
 namespace undead {
 	class Block {
 	public:
-		Block(short x, short y, Type type) {
+		Block(short x, short y, Type type) : x(x), y(y), BlockType(type) {
 			assert(x >= 0 and x < 128);
 			assert(y >= 0 and y < 128);
-
-			this->x = x;
-			this->y = y;
-			this->BlockType = type;
 		};
 
 		void changeType(Type type) {
@@ -29,8 +25,8 @@ namespace undead {
 		};
 
 	public:
-		int x;
-		int y;
+		const unsigned char x;
+		const unsigned char y;
 		Type BlockType;
 	};
 };

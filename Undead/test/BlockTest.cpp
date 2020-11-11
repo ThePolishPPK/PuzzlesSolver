@@ -16,14 +16,13 @@ const char* TypeName(Type type) {
 TEST(BlockTest, Constructor) {
 	unsigned char x, y, z, t;
 	Type types[] = {Type::Empty, Type::Ghost, Type::MirrorLeft, Type::MirrorRight, Type::Vampire, Type::Zombie};
-	Block tempBlock(0, 0, Type::Empty);
 
 	for (z=0; z<128; z++) {
 		x = std::rand() % 128;
 		y = std::rand() % 128;
 		t = std::rand() % 6;
 
-		tempBlock = Block(x, y, types[t]);
+		Block tempBlock(x, y, types[t]);
 
 		ASSERT_EQ(tempBlock.x, x) << "X coordinate is invalid!";
 		ASSERT_EQ(tempBlock.y, y) << "Y coordinate is invalid!";
