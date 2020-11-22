@@ -8,7 +8,11 @@ if (Debug)
 	option(CMAKE_BUILD_TYPE Debug)
 endif()
 
-add_library(${PROJECT_NAME} SHARED Block.h Block.cpp Type.cpp)
+add_library(${PROJECT_NAME} SHARED
+Type.cpp
+Block.h Block.cpp
+Board.h Board.cpp
+)
 
 if (Tests)
 	add_subdirectory("test/")

@@ -8,8 +8,7 @@
 
 #include "Type.cpp"
 
-namespace sgt {
-namespace pattern {
+namespace sgt::pattern {
 	class Block {
 	public:
 		Block(const unsigned char x, const unsigned char y, Type blockType=Type::Empty, bool locked=false);
@@ -23,6 +22,5 @@ namespace pattern {
 		Type _type; //!< Current type of block
 		bool _isStatic; //!< Define possibility of changing type
 	};
-}
 }
 #endif

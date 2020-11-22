@@ -6,6 +6,7 @@ link_directories($ENV{HOME}/.local/lib/gtest/)
 set(TEST_LIST
 	main.cpp
 	BlockTest.cpp
+	BoardTest.cpp
 )
 
 add_executable(${PROJECT_NAME} main.cpp ${TEST_LIST})
