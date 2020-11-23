@@ -20,7 +20,7 @@ TEST(BoardTest, parseGameID) {
 			std::vector<std::vector<unsigned char>>	// Sessions of black blocks
 		, 2>
 	>> testData{
-		{"5x5:4/3/3/1/1/3/3/3/1/2", {5, 5}, {{ {{4}, {3}, {3}, {1}, {1}}, {{3}, {3}, {3}, {2}, {1}} }}},
+		{"5x5:4/3/3/1/1/3/3/3/1/2", {5, 5}, {{ {{4}, {3}, {3}, {1}, {1}}, {{3}, {3}, {3}, {1}, {2}} }}},
 		{
 			"11x18:3/2.4/3.3/3.4/6.4.1/4.3/2.7.2/1.5.1.1/10.1/3.7.2.1/2.8.6/3.2/4.3/4.4/1.1.1.1/1.3/1.3/1.3/7/7/7/8/3.2/7.1/4.1.2/2.1.1.2/1/2.1/1.3",
 			{11, 18},
@@ -39,13 +39,13 @@ TEST(BoardTest, parseGameID) {
 		ASSERT_EQ(tempBoard.width, sizes.first);
 		ASSERT_EQ(tempBoard.height, sizes.second);
 
-		for (unsigned char x=0; x < sizes.first; x++) {
-			std::vector<unsigned char> sessions = tempBoard.getSessionsInRow(x);
-			ASSERT_EQ(sessions, sessionsRow[x]);
-		}
 		for (unsigned char y=0; y < sizes.second; y++) {
-			std::vector<unsigned char> sessions = tempBoard.getSessionsInColumn(y);
-			ASSERT_EQ(sessions, sessionsColumn[y]);
+			std::vector<unsigned char> sessions = tempBoard.getSessionsInRow(y);
+			ASSERT_EQ(sessions, sessionsRow[y]) << "Invalid sessions on row, number: "+std::to_string(y)+"!";
+		}
+		for (unsigned char x=0; x < sizes.first; x++) {
+			std::vector<unsigned char> sessions = tempBoard.getSessionsInColumn(x);
+			ASSERT_EQ(sessions, sessionsColumn[x])  << "Invalid sessions on column, number: "+std::to_string(x)+"!";
 		}
 	}
 };
@@ -67,7 +67,7 @@ TEST(BoardTest, getBlock) {
 };
 
 TEST(BoardTest, getSessionsInColumnAndRow) {
-	Board tempBoard(11, 18);
+	Board tempBoard(18, 11);
 	ASSERT_NO_THROW(tempBoard.getSessionsInColumn(4));
 	ASSERT_NO_THROW(tempBoard.getSessionsInColumn(17));
 	ASSERT_NO_THROW(tempBoard.getSessionsInColumn(14));

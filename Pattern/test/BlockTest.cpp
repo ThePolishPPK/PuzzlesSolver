@@ -14,7 +14,10 @@ TEST(BlockTest, Constructor) {
 	>> testData = {
 		{3, 7, Type::Black},
 		{11, 3, Type::White},
-		{8, 6, Type::Empty}
+		{8, 6, Type::Empty},
+		{3, 0, Type::Empty},
+		{0, 5, Type::White},
+		{0, 0, Type::Black}
 	};
 	for (auto data=testData.begin(); data != testData.end(); data++) {
 		Block tempBlock(
@@ -37,5 +40,6 @@ TEST(BlockTest, changeType) {
 	Block changableBlock(3, 7);
 	Block unchangeableBlock(4, 2,Type::Empty, true);
 	ASSERT_NO_THROW({changableBlock.changeType(Type::Black);}) << "Block was been declared as unlocked and must be changeable!";
+	ASSERT_EQ(changableBlock.getType(), Type::Black) << "Type wasn't been changed!";
 	ASSERT_ANY_THROW(unchangeableBlock.changeType(Type::White);) << "Block was been declared as locked and mustn't be changeable!";
 }
