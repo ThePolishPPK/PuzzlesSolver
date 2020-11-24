@@ -12,6 +12,7 @@ add_library(${PROJECT_NAME} SHARED
 Type.cpp
 Block.h Block.cpp
 Board.h Board.cpp
+Solve.h Solve.cpp
 )
 
 if (Tests)
