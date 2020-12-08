@@ -1,0 +1,22 @@
+/**
+@mainpage Pattern solve algorithm
+<h2>Blocks in algorithm</h2>
+
+\section Shared_blocks_of_max_offsets Shared of max offsets
+<b>Example for sessions [3, 5, 2] on 14 block lenght row:</b>
+\dot
+digraph maxOffsetsExample352 {
+	min [label=<<b>Minimum offset</b><br/><font color='red'>▒ ▒ ▒</font> <font>░</font> <font color='green'>▒ ▒ ▒ ▒ ▒</font> <font>░</font> <font color='blue'>▒ ▒</font> <font>░ ░</font>>, shape="rect"];
+	max [label=<<b>Maximum offset</b><br/><font>░ ░</font> <font color='red'>▒ ▒ ▒</font> <font>░</font> <font color='green'>▒ ▒ ▒ ▒ ▒</font> <font>░</font> <font color='blue'>▒ ▒</font>>, shape="rect"];
+	union [label=<<table color='transparent'>
+	<tr><td color='transparent'><font color='red'>▒ ▒ ▒</font> <font>░</font> <font color='green'>▒ ▒ ▒ ▒ ▒</font> <font>░</font> <font color='blue'>▒ ▒</font> <font>░ ░</font></td></tr>
+	<tr><td color='transparent'><font>░ ░</font> <font color='red'>▒ ▒ ▒</font> <font>░</font> <font color='green'>▒ ▒ ▒ ▒ ▒</font> <font>░</font> <font color='blue'>▒ ▒</font></td></tr>
+	<tr><td color='black'>SHARED</td></tr>
+	<tr><td color='transparent'><font>░ ░</font> <font color='red'>▒</font> <font>░ ░ ░</font> <font color='green'>▒ ▒ ▒</font> <font>░ ░ ░ ░ ░</font></td></tr>
+	</table>>, shape="rect"];
+	min -> max -> union;
+}
+\enddot
+
+
+*/

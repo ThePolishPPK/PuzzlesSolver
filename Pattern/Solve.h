@@ -16,7 +16,7 @@ namespace sgt::pattern {
 	class Solve {
 	public:
 		Solve(Board& board);
-		std::vector<solvedBlock_t> getUnionOfOffsets();
+		std::vector<solvedBlock_t> getMaxDeparturedBlocks();
 
 	private:
 		const Board& _board; //!< Contain address for Board to solve

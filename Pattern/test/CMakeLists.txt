@@ -7,6 +7,7 @@ set(TEST_LIST
 	main.cpp
 	BlockTest.cpp
 	BoardTest.cpp
+	SolveTest.cpp
 )
 
 add_executable(${PROJECT_NAME} main.cpp ${TEST_LIST})
