@@ -6,6 +6,7 @@ option(Debug "Make in debug mode" OFF)
 
 if (Debug)
 	option(CMAKE_BUILD_TYPE Debug)
+	add_compile_options(-g)
 endif()
 
 add_library(${PROJECT_NAME} SHARED

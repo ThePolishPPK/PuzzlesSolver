@@ -12,13 +12,11 @@ TEST(SolveTest, getMaxDeparturedBlocks) {
 	Board board = Board::parseGameID(gameID);
 	Solve solve(board);
 	std::vector<solvedBlock_t> expected = {
-		{0, 2, Type::Black}, {0, 3, Type::Black}, {0, 7, Type::Black},
-		{1, 9, Type::Black},
-		{2, 5, Type::Black}, {2, 9, Type::Black},
-		{3, 7, Type::Black}, {3, 8, Type::Black}, {3, 9, Type::Black},
-		{4, 7, Type::Black}, {4, 8, Type::Black}, {4, 9, Type::Black},
-		{5, 1, Type::Black},
-		{6, 1, Type::Black}
+		{0, 2, Type::Black}, {0, 3, Type::Black}, {0, 6, Type::Black},
+		{2, 9, Type::Black},
+		{3, 9, Type::Black},
+		{4, 1, Type::Black}, {4, 7, Type::Black}, {4, 8, Type::Black}, {4, 9, Type::Black},
+		{5, 1, Type::Black}, {5, 5, Type::Black}, {5, 7, Type::Black}, {5, 8, Type::Black}, {5, 9, Type::Black}
 	};
 	std::vector<solvedBlock_t> result = solve.getMaxDeparturedBlocks();
 	ASSERT_EQ(result.size(), expected.size()) << "Method doesn't return enough count of elements!";
