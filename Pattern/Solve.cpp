@@ -1,6 +1,7 @@
 #include "Solve.h"
 #include "Block.h"
 #include "Type.cpp"
+#include <cstdio>
 
 /**
  * @author	ThePPK
@@ -31,9 +32,56 @@ namespace sgt::pattern {
 	 * Certainty @ref Block "blocks" are shared by this same blocks on virtual line with maximum and minimum offsets.
 	 * You can see @ref Shared_blocks_of_max_offsets "example".
 	 * @returns	Vector of @ref solvedBlock_t "solved type" @ref Block "block"
-	 * @todo	Make method
+	 * @todo	Optimize function. Ex add to one loop
 	 */
 	std::vector<solvedBlock_t> Solve::getMaxDeparturedBlocks() {
+		std::vector<solvedBlock_t> output = {};
+		std::vector<
+			std::vector<bool>
+		> alreadySet(this->_board.height, std::vector<bool>(this->_board.width, false));
+
+		// Rows
+		for (unsigned char y=0; y < this->_board.height; y++) {
+			auto sessions = this->_board.getSessionsInRow(y);
+			unsigned char delta = this->_board.width - (sessions.size()-1);
+			for (auto session = sessions.begin(); session != sessions.end(); session++) {
+				delta -= (*session);
+			}
+			unsigned char offset = 0;
+			for (auto session = sessions.begin(); session != sessions.end(); session++) {
+				for (unsigned char x = offset+delta; x < offset+(*session); x++) {
+					if (! alreadySet[y][x]) {
+						alreadySet[y][x] = true;
+						output.push_back(
+							solvedBlock_t(x, y, Type::Black)
+						);
+					}
+				}
+				offset += (*session);
+			}
+		}
+
+		// Columns
+		for (unsigned char x=0; x < this->_board.width; x++) {
+			auto sessions = this->_board.getSessionsInColumn(x);
+			unsigned char delta = this->_board.height - (sessions.size()-1);
+			for (auto session = sessions.begin(); session != sessions.end(); session++) {
+				delta -= (*session);
+			}
+			unsigned char offset = 0;
+			for (auto session = sessions.begin(); session != sessions.end(); session++) {
+				for (unsigned char y = offset+delta; y < offset+(*session); y++) {
+					if (! alreadySet[y][x]) {
+						alreadySet[y][x] = true;
+						output.push_back(
+							solvedBlock_t(x, y, Type::Black)
+						);
+					}
+				}
+				offset += (*session);
+			}
+		}
+		return output;
 	};
 
 	solvedBlock_t::solvedBlock_t(unsigned char x, unsigned char y, Type type) {

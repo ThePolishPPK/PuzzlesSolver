@@ -19,7 +19,7 @@ namespace sgt::pattern {
 		std::vector<solvedBlock_t> getMaxDeparturedBlocks();
 
 	private:
-		const Board& _board; //!< Contain address for Board to solve
+		Board& _board; //!< Contain address for Board to solve
 	};
 }
 #endif
