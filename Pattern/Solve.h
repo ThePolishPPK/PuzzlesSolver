@@ -17,6 +17,7 @@ namespace sgt::pattern {
 	public:
 		Solve(Board& board);
 		std::vector<solvedBlock_t> getMaxDeparturedBlocks();
+		std::vector<solvedBlock_t> getComplementaryBlocks();
 
 	private:
 		Board& _board; //!< Contain address for Board to solve

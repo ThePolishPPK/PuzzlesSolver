@@ -84,6 +84,19 @@ namespace sgt::pattern {
 		return output;
 	};
 
+	/**
+	 * @brief	Method complete blocks on start and end of line.
+	 * @details
+	 * Method search @ref Type "black" @ref Block "blocks" on start or end of line and fill with session length and close.
+	 * If cont of sessions are lower or equal than fill other blocks with white blocks.
+	 * @returns	Vector of @ref solvedBlock_t "solved blocks"
+	 * @todo	Method
+	 * @todo	Test
+	 */
+	std::vector<solvedBlock_t> Solve::getComplementaryBlocks() {
+	
+	};
+
 	solvedBlock_t::solvedBlock_t(unsigned char x, unsigned char y, Type type) {
 		this->x = x;
 		this->y = y;
