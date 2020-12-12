@@ -1,7 +1,6 @@
 #include "Solve.h"
 #include "Block.h"
 #include "Type.cpp"
-#include <cstdio>
 
 /**
  * @author	ThePPK
@@ -90,11 +89,59 @@ namespace sgt::pattern {
 	 * Method search @ref Type "black" @ref Block "blocks" on start or end of line and fill with session length and close.
 	 * If cont of sessions are lower or equal than fill other blocks with white blocks.
 	 * @returns	Vector of @ref solvedBlock_t "solved blocks"
-	 * @todo	Method
+	 * @todo	Method of row. Current is for columns
+	 * @warning	In that moment method work only for columns
 	 * @todo	Test
 	 */
 	std::vector<solvedBlock_t> Solve::getComplementaryBlocks() {
-	
+		std::vector<solvedBlock_t> output = {};
+		std::vector<std::vector<bool>> alreadySet(
+			this->_board.height,
+			std::vector<bool>(this->_board.width, false)
+		);
+		for (unsigned char x=0; x < this->_board.width; x++) {
+			auto sessions = this->_board.getSessionsInColumn(x);
+			if (this->_board.getBlock(x, 0).getType() == Type::Black) {
+				unsigned char y;
+				for (y=1; y < sessions[0]; y++) {
+					if (!alreadySet[y][x] and
+						this->_board.getBlock(x, y).getType() == Type::Empty) {
+						output.push_back(
+							solvedBlock_t(x, y, Type::Black)
+						);
+						alreadySet[y][x] = true;
+					}
+				}
+				if (y < this->_board.height and
+					this->_board.getBlock(x, y).getType() == Type::Empty) {
+					output.push_back(
+						solvedBlock_t(x, y, Type::White)
+					);
+					alreadySet[y][x] = true;
+				}
+			}
+			if (this->_board.getBlock(x, this->_board.height-1).getType() == Type::Black) {
+				unsigned char y;
+				for (y=this->_board.height-1; y>this->_board.height-sessions.back()-1; y--) {
+					if (!alreadySet[y][x] and
+						this->_board.getBlock(x, y).getType() == Type::Empty) {
+						output.push_back(
+							solvedBlock_t(x, y, Type::Black)
+						);
+						alreadySet[y][x] = true;
+					}
+				}
+				if (y >= 0 and
+					this->_board.getBlock(x, y).getType() == Type::Empty) {
+					output.push_back(
+						solvedBlock_t(x, y, Type::White)
+					);
+					alreadySet[y][x] = true;
+				}
+			}
+		}
+		return output;
+		//return std::vector<solvedBlock_t>({{0, 2, Type::Black}, {0, 3, Type::Black}, {0, 6, Type::Black}});
 	};
 
 	solvedBlock_t::solvedBlock_t(unsigned char x, unsigned char y, Type type) {
