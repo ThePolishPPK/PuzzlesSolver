@@ -100,48 +100,35 @@ namespace sgt::pattern {
 			std::vector<bool>(this->_board.width, false)
 		);
 		for (unsigned char x=0; x < this->_board.width; x++) {
+			unsigned char setFirst, setLast;
 			auto sessions = this->_board.getSessionsInColumn(x);
-			if (this->_board.getBlock(x, 0).getType() == Type::Black) {
-				unsigned char y;
-				for (y=1; y < sessions[0]; y++) {
-					if (!alreadySet[y][x] and
-						this->_board.getBlock(x, y).getType() == Type::Empty) {
-						output.push_back(
-							solvedBlock_t(x, y, Type::Black)
-						);
-						alreadySet[y][x] = true;
-					}
-				}
-				if (y < this->_board.height and
-					this->_board.getBlock(x, y).getType() == Type::Empty) {
-					output.push_back(
-						solvedBlock_t(x, y, Type::White)
-					);
-					alreadySet[y][x] = true;
-				}
+			setFirst = (this->_board.getBlock(x, 0).getType() == Type::Black)? sessions[0] : 0;
+			if (this->_board.getBlock(x, this->_board.height-1).getType() == Type::Black and sessions.size() >= 2) {
+				setLast = this->_board.height-sessions.back()-1;
+			} else {
+				setLast = this->_board.height;
 			}
-			if (this->_board.getBlock(x, this->_board.height-1).getType() == Type::Black) {
-				unsigned char y;
-				for (y=this->_board.height-1; y>this->_board.height-sessions.back()-1; y--) {
-					if (!alreadySet[y][x] and
-						this->_board.getBlock(x, y).getType() == Type::Empty) {
+			for (unsigned char y=0; y < this->_board.height; y++) {
+				if (setFirst == 0 or y > setFirst) {
+					y = setLast;
+					setFirst = this->_board.height;
+					if (y >= this->_board.height) { break; }
+				}
+				if (not alreadySet[y][x] and this->_board.getBlock(x, y).getType() == Type::Empty) {
+					if (y == setFirst or y == setLast) {
+						output.push_back(
+							solvedBlock_t(x, y, Type::White)
+						);
+					} else {
 						output.push_back(
 							solvedBlock_t(x, y, Type::Black)
 						);
-						alreadySet[y][x] = true;
 					}
 				}
-				if (y >= 0 and
-					this->_board.getBlock(x, y).getType() == Type::Empty) {
-					output.push_back(
-						solvedBlock_t(x, y, Type::White)
-					);
-					alreadySet[y][x] = true;
-				}
+				alreadySet[y][x] = true;
 			}
 		}
 		return output;
-		//return std::vector<solvedBlock_t>({{0, 2, Type::Black}, {0, 3, Type::Black}, {0, 6, Type::Black}});
 	};
 
 	solvedBlock_t::solvedBlock_t(unsigned char x, unsigned char y, Type type) {
