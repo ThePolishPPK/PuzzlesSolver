@@ -89,9 +89,7 @@ namespace sgt::pattern {
 	 * Method search @ref Type "black" @ref Block "blocks" on start or end of line and fill with session length and close.
 	 * If cont of sessions are lower or equal than fill other blocks with white blocks.
 	 * @returns	Vector of @ref solvedBlock_t "solved blocks"
-	 * @todo	Method of row. Current is for columns
-	 * @warning	In that moment method work only for columns
-	 * @todo	Test
+	 * @todo	Clear code
 	 */
 	std::vector<solvedBlock_t> Solve::getComplementaryBlocks() {
 		std::vector<solvedBlock_t> output = {};
@@ -99,33 +97,46 @@ namespace sgt::pattern {
 			this->_board.height,
 			std::vector<bool>(this->_board.width, false)
 		);
-		for (unsigned char x=0; x < this->_board.width; x++) {
-			unsigned char setFirst, setLast;
-			auto sessions = this->_board.getSessionsInColumn(x);
-			setFirst = (this->_board.getBlock(x, 0).getType() == Type::Black)? sessions[0] : 0;
-			if (this->_board.getBlock(x, this->_board.height-1).getType() == Type::Black and sessions.size() >= 2) {
-				setLast = this->_board.height-sessions.back()-1;
-			} else {
-				setLast = this->_board.height;
+		unsigned char length = this->_board.height;
+		unsigned char count = this->_board.width;
+		bool column = true;
+		for (unsigned char x=0; x <= count; x++) {
+			if (x == count) {
+				if (column) {
+					column = false;
+					count = this->_board.height;
+					length = this->_board.width;
+					x = 0;
+				} else {
+					break;
+				}
 			}
-			for (unsigned char y=0; y < this->_board.height; y++) {
+			unsigned char setFirst, setLast;
+			auto sessions = column ? this->_board.getSessionsInColumn(x) : this->_board.getSessionsInRow(x);
+			setFirst = (this->_board.getBlock(column? x : 0, column? 0 : x).getType() == Type::Black)? sessions[0] : 0;
+			setLast = length;
+			if (this->_board.getBlock(column? x : length-1, column? length-1 : x).getType() == Type::Black and
+				sessions.size() >= 2) {
+				setLast -= sessions.back()+1;
+			}
+			for (unsigned char y=0; y < length; y++) {
 				if (setFirst == 0 or y > setFirst) {
 					y = setLast;
-					setFirst = this->_board.height;
-					if (y >= this->_board.height) { break; }
+					setFirst = length;
+					if (y >= length) { break; }
 				}
-				if (not alreadySet[y][x] and this->_board.getBlock(x, y).getType() == Type::Empty) {
+				if (not alreadySet[y][x] and this->_board.getBlock(column? x : y, column? y : x).getType() == Type::Empty) {
 					if (y == setFirst or y == setLast) {
 						output.push_back(
-							solvedBlock_t(x, y, Type::White)
+							solvedBlock_t(column? x : y, column? y : x, Type::White)
 						);
 					} else {
 						output.push_back(
-							solvedBlock_t(x, y, Type::Black)
+							solvedBlock_t(column? x : y, column? y : x, Type::Black)
 						);
 					}
 				}
-				alreadySet[y][x] = true;
+				alreadySet[column? x : y][column? y : x] = true;
 			}
 		}
 		return output;
