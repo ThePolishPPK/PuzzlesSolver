@@ -45,14 +45,18 @@ TEST(SolveTest, getComplementaryBlocks) {
 	std::vector<std::pair<char, char>> changes = {
 		{2, 9}, {3, 9},
 		{2, 0}, {3, 0}, {3, 2},
-		{6, 3}, {7, 4}
+		{0, 5},
+		{0, 2}, {4, 2},
+		{0, 4},
+		{9, 8}
 	};
 	std::vector<solvedBlock_t> expected = {
-		{6, 9, Type::White}, {7, 9, Type::White}, {8, 9, Type::White}, {9, 9, Type::White},
 		{2, 1, Type::Black}, {2, 2, Type::Black}, {2, 3, Type::Black}, {2, 4, Type::Black}, {2, 5, Type::White}, {2, 6, Type::White}, {2, 7, Type::Black}, {2, 8, Type::Black},
 		{3, 1, Type::Black}, {3, 3, Type::Black}, {3, 4, Type::Black}, {3, 5, Type::White}, {3, 6, Type::White}, {3, 7, Type::Black}, {3, 8, Type::Black},
-		{6, 0, Type::White}, {7, 0, Type::White}, {7, 1, Type::White}, {6, 6, Type::White},
-		{6, 7, Type::White}, {6, 8, Type::White}, {7, 7, Type::White}, {7, 8, Type::White}
+		{1, 5, Type::Black},
+		{1, 2, Type::Black}, {5, 2, Type::White},
+		{1, 4, Type::Black}, {4, 4, Type::Black}, {5, 4, Type::Black}, {6, 4, Type::Black}, {7, 4, Type::Black}, {8, 4, Type::White},
+		{8, 8, Type::White}
 	};
 	for (auto change = changes.begin(); change != changes.end(); change++) {
 		board.getBlock(
@@ -64,7 +68,7 @@ TEST(SolveTest, getComplementaryBlocks) {
 	// Test
 	Solve solve(board);
 	std::vector<solvedBlock_t> result = solve.getComplementaryBlocks();
-	
+
 	ASSERT_EQ(result.size(), expected.size()) << "Method doesn't return enough count of elements!";
 	for (auto block = expected.begin(); block != expected.end(); block++) {
 		bool found = false;
