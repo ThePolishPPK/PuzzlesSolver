@@ -3,7 +3,7 @@
 
 #include "Block.h"
 #include <vector>
-//#include <pair>
+#include <string>
 
 namespace sgt::pattern {
 	class Board {
@@ -13,6 +13,8 @@ namespace sgt::pattern {
 		Block& getBlock(unsigned char x, unsigned char y);
 		std::vector<unsigned char> getSessionsInColumn(unsigned char column);
 		std::vector<unsigned char> getSessionsInRow(unsigned char row);
+		std::string exportSave();
+		std::string getGameID();
 		
 		const unsigned char width; //!< Width of board / Count of blocks in row
 		const unsigned char height; //!< Height of board / Count of blocks in column

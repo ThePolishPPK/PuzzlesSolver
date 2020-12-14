@@ -1,7 +1,7 @@
 #include <gtest/gtest.h>
 #include "../Board.h"
 #include <stdexcept>
-#include <cstdio>
+#include <string>
 
 using namespace sgt::pattern;
 
@@ -85,4 +85,35 @@ TEST(BoardTest, getSessionsInColumnAndRow) {
 	ASSERT_THROW(tempBoard.getSessionsInRow(11), std::invalid_argument);
 	ASSERT_THROW(tempBoard.getSessionsInRow(97), std::invalid_argument);
 	ASSERT_THROW(tempBoard.getSessionsInRow(22), std::invalid_argument);
+};
+
+TEST(BoardTest, exportSave) {
+	char gameID[] = "5x5:1/1/3/4/1.2/2/1/3/3/1.1.1";
+	Board board = Board::parseGameID(gameID);
+	board.getBlock(0, 0).changeType(Type::White);
+	board.getBlock(1, 0).changeType(Type::White);
+	board.getBlock(2, 0).changeType(Type::White);
+	board.getBlock(0, 1).changeType(Type::White);
+	board.getBlock(1, 1).changeType(Type::White);
+	board.getBlock(2, 1).changeType(Type::White);
+	board.getBlock(0, 4).changeType(Type::Black);
+	board.getBlock(1, 4).changeType(Type::White);
+	board.getBlock(2, 4).changeType(Type::Black);
+	board.getBlock(3, 4).changeType(Type::White);
+	board.getBlock(4, 4).changeType(Type::Black);
+	board.getBlock(3, 0).changeType(Type::Black);
+	board.getBlock(3, 1).changeType(Type::Black);
+	board.getBlock(3, 2).changeType(Type::Black);
+	board.getBlock(3, 3).changeType(Type::Black);
+	board.getBlock(2, 2).changeType(Type::Black);
+	
+	
+	std::string expect("SAVEFILE:41:Simon Tatham's Portable Puzzle Collection\nVERSION :1:1\nGAME    :7:Pattern\nPARAMS  :3:5x5\nCPARAMS :3:5x5\nDESC    :25:1/1/3/4/1.2/2/1/3/3/1.1.1\nNSTATES :2:16\nSTATEPOS:2:16\nMOVE    :8:E0,0,1,1\nMOVE    :8:E0,1,1,1\nMOVE    :8:F0,4,1,1\nMOVE    :8:E1,0,1,1\nMOVE    :8:E1,1,1,1\nMOVE    :8:E1,4,1,1\nMOVE    :8:E2,0,1,1\nMOVE    :8:E2,1,1,1\nMOVE    :8:F2,2,1,1\nMOVE    :8:F2,4,1,1\nMOVE    :8:F3,0,1,1\nMOVE    :8:F3,1,1,1\nMOVE    :8:F3,2,1,1\nMOVE    :8:F3,3,1,1\nMOVE    :8:E3,4,1,1\nMOVE    :8:F4,4,1,1\n");
+	ASSERT_EQ(board.exportSave(), expect);
+};
+
+TEST(BoardTest, getGameID) {
+	char gameID[] = "5x5:3/1.2/1.2/2/1/4/1/1/3/3";
+	Board board = Board::parseGameID(gameID);
+	ASSERT_EQ(board.getGameID(), std::string(gameID));
 };
