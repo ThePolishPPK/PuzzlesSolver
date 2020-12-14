@@ -142,6 +142,18 @@ namespace sgt::pattern {
 		return output;
 	};
 
+	/**
+	 * @breif	Method updata blocks.
+	 * @details
+	 * Method update blocks types by @ref solvedBlock_t "solved blocks" data.
+	 * @param	Vector of @ref solvedBlock_t "solved blocks"
+	 */
+	void Solve::appendSolvedBlocks(std::vector<solvedBlock_t> solvedBlocks) {
+		for (auto block = solvedBlocks.begin(); block != solvedBlocks.end(); block++) {
+			this->_board.getBlock(block->x, block->y).changeType(block->type);
+		}
+	};
+
 	solvedBlock_t::solvedBlock_t(unsigned char x, unsigned char y, Type type) {
 		this->x = x;
 		this->y = y;

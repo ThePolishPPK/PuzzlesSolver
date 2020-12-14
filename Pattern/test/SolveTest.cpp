@@ -88,3 +88,19 @@ TEST(SolveTest, getComplementaryBlocks) {
 		}
 	}
 }
+
+TEST(SolveTest, appendSolvedBlocks) {
+	char gameID[] = "5x5:1/4/1.2/2/2/3/1.2/1/3/2";
+	Board board = Board::parseGameID(gameID);
+	Solve solve(board);
+	std::vector<solvedBlock_t> solvedBlocks = {
+		{3, 4, Type::White},
+		{0, 0, Type::Black},
+		{1, 2, Type::Black},
+		{2, 0, Type::White}
+	};
+	solve.appendSolvedBlocks(solvedBlocks);
+	for (auto expected = solvedBlocks.begin(); expected != solvedBlocks.end(); expected++) {
+		ASSERT_EQ(board.getBlock(expected->x, expected->y).getType(), expected->type);
+	}
+}
