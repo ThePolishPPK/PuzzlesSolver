@@ -158,9 +158,9 @@ namespace sgt::pattern {
 			}
 		}
 		output.append("NSTATES :");
-		output.append(std::to_string(std::to_string(countOfMoves).size())+":"+std::to_string(countOfMoves)+"\n");
+		output.append(std::to_string(std::to_string(countOfMoves).size())+":"+std::to_string(countOfMoves+1)+"\n");
 		output.append("STATEPOS:");
-		output.append(std::to_string(std::to_string(countOfMoves).size())+":"+std::to_string(countOfMoves)+"\n");
+		output.append(std::to_string(std::to_string(countOfMoves).size())+":"+std::to_string(countOfMoves+1)+"\n");
 		output.append(moves);
 		return output;
 	};
@@ -193,3 +193,4 @@ namespace sgt::pattern {
 		return output;
 	};
 }
+

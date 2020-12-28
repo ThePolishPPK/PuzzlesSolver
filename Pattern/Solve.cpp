@@ -56,7 +56,7 @@ namespace sgt::pattern {
 						);
 					}
 				}
-				offset += (*session);
+				offset += (*session)+1;
 			}
 		}
 
@@ -77,7 +77,7 @@ namespace sgt::pattern {
 						);
 					}
 				}
-				offset += (*session);
+				offset += (*session)+1;
 			}
 		}
 		return output;

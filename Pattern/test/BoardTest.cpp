@@ -108,7 +108,7 @@ TEST(BoardTest, exportSave) {
 	board.getBlock(2, 2).changeType(Type::Black);
 	
 	
-	std::string expect("SAVEFILE:41:Simon Tatham's Portable Puzzle Collection\nVERSION :1:1\nGAME    :7:Pattern\nPARAMS  :3:5x5\nCPARAMS :3:5x5\nDESC    :25:1/1/3/4/1.2/2/1/3/3/1.1.1\nNSTATES :2:16\nSTATEPOS:2:16\nMOVE    :8:E0,0,1,1\nMOVE    :8:E0,1,1,1\nMOVE    :8:F0,4,1,1\nMOVE    :8:E1,0,1,1\nMOVE    :8:E1,1,1,1\nMOVE    :8:E1,4,1,1\nMOVE    :8:E2,0,1,1\nMOVE    :8:E2,1,1,1\nMOVE    :8:F2,2,1,1\nMOVE    :8:F2,4,1,1\nMOVE    :8:F3,0,1,1\nMOVE    :8:F3,1,1,1\nMOVE    :8:F3,2,1,1\nMOVE    :8:F3,3,1,1\nMOVE    :8:E3,4,1,1\nMOVE    :8:F4,4,1,1\n");
+	std::string expect("SAVEFILE:41:Simon Tatham's Portable Puzzle Collection\nVERSION :1:1\nGAME    :7:Pattern\nPARAMS  :3:5x5\nCPARAMS :3:5x5\nDESC    :25:1/1/3/4/1.2/2/1/3/3/1.1.1\nNSTATES :2:17\nSTATEPOS:2:17\nMOVE    :8:E0,0,1,1\nMOVE    :8:E0,1,1,1\nMOVE    :8:F0,4,1,1\nMOVE    :8:E1,0,1,1\nMOVE    :8:E1,1,1,1\nMOVE    :8:E1,4,1,1\nMOVE    :8:E2,0,1,1\nMOVE    :8:E2,1,1,1\nMOVE    :8:F2,2,1,1\nMOVE    :8:F2,4,1,1\nMOVE    :8:F3,0,1,1\nMOVE    :8:F3,1,1,1\nMOVE    :8:F3,2,1,1\nMOVE    :8:F3,3,1,1\nMOVE    :8:E3,4,1,1\nMOVE    :8:F4,4,1,1\n");
 	ASSERT_EQ(board.exportSave(), expect);
 };
 
