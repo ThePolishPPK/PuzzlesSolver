@@ -4,6 +4,7 @@
 #include <stdexcept>
 #include <regex>
 #include <string>
+#include <istream>
 
 /**
  * @author ThePPK
@@ -122,7 +123,7 @@ namespace sgt::pattern {
 		return this->_allocatedBlock.second[row];
 	};
 
-	/*
+	/**
 	 * @breif	Method export board in save format.
 	 * @details
 	 * Method pack all block data into save format ignoring sequence of changed blocks.
@@ -134,9 +135,10 @@ namespace sgt::pattern {
 		std::string size = std::to_string(this->width);
 		size.append("x");
 		size.append(std::to_string(this->height));
-		std::string gameID = this->getGameID();
+		std::string gameID = this->exportGameID();
 		gameID = gameID.substr(gameID.find(':')+1);
 		std::string moves = "";
+		std::string tempMove = "";
 		unsigned short countOfMoves = 0;
 		std::string output = "SAVEFILE:41:Simon Tatham's Portable Puzzle Collection\nVERSION :1:1\nGAME    :7:Pattern\nPARAMS  :";
 		output.append(std::to_string(size.size())+":"+size);
@@ -147,12 +149,15 @@ namespace sgt::pattern {
 			for (y=0; y<this->height; y++) {
 				tempBlock = &(this->getBlock(x, y));
 				if (tempBlock->getType() != Type::Empty) {
-					moves.append("MOVE    :8:");
-					moves.append(tempBlock->getType() == Type::White ? "E" : "F");
-					moves.append(std::to_string(tempBlock->x));
-					moves.append(",");
-					moves.append(std::to_string(tempBlock->y));
-					moves.append(",1,1\n");
+					tempMove = "";
+					tempMove.append(tempBlock->getType() == Type::White ? "E" : "F");
+					tempMove.append(std::to_string(tempBlock->x));
+					tempMove.append(",");
+					tempMove.append(std::to_string(tempBlock->y));
+					tempMove.append(",1,1\n");
+					moves.append("MOVE    :");
+					moves.append(std::to_string(tempMove.size()-1)+":");
+					moves.append(tempMove);
 					countOfMoves++;
 				}
 			}
@@ -165,13 +170,13 @@ namespace sgt::pattern {
 		return output;
 	};
 
-	/*
+	/**
 	 * @brief	Method return game id.
 	 * @details
 	 * Method parse sessions of black blocks and create game id.
 	 * @return	String with game id
 	 */
-	std::string Board::getGameID() {
+	std::string Board::exportGameID() {
 		std::string output = std::to_string(this->width)+"x"+std::to_string(this->height)+":";
 		std::vector<unsigned char> tempSessions({});
 		for (unsigned short q=0; q<this->width+this->height; q++) {
@@ -191,6 +196,19 @@ namespace sgt::pattern {
 		}
 		output.pop_back();
 		return output;
+	};
+
+	/**
+	 * @breif  Read save from stream
+     * @details
+     * Method read save data stream and create board.
+     * @param saveStream Data stream
+     * @throw std::invalid_argument When save data are incorrect
+     * @return Builded @ref Board "board" object from recived data stream
+	 * @todo Make method
+	 */
+	Board Board::parseSave(std::istream& saveStream) {
+		char buff[1024];
 	};
 }
 
