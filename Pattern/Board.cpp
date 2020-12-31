@@ -4,6 +4,9 @@
 #include <stdexcept>
 #include <regex>
 #include <string>
+#include <cstring>
+#include <cstdlib>
+#include <regex>
 #include <istream>
 
 /**
@@ -205,10 +208,67 @@ namespace sgt::pattern {
      * @param saveStream Data stream
      * @throw std::invalid_argument When save data are incorrect
      * @return Builded @ref Board "board" object from recived data stream
-	 * @todo Make method
+	 * @todo Make parse for: DESC, NSTATES, STATESPOS and MOVEs analyzer
 	 */
 	Board Board::parseSave(std::istream& saveStream) {
 		char buff[1024];
+		char param[9];
+		unsigned short streamSize;
+		bool hasSaveFileHeader = false;
+		bool alreadyMetaData = true;
+		std::string description;
+		unsigned char width, height;
+		unsigned short nstates, statepos;
+		std::cmatch buffMatch;
+		
+		std::regex paramsRegEx("^([0-9]+)x([0-9]+)$");
+		auto getStreamSize = [&saveStream](){
+			char buff2[8];
+			saveStream.get(buff2, 2);
+			saveStream.get(buff2, 8, ':');
+			return std::atoi(buff2);
+		};
+		
+		while (alreadyMetaData) {
+			if (not hasSaveFileHeader) {
+				saveStream.getline(buff, 1024);
+				if (*buff == *"SAVEFILE:41:Simon Tatham's Portable Puzzle Collection") {
+					hasSaveFileHeader = true;
+					continue;
+				} else {
+					throw std::invalid_argument("Missing valid SAVEFILE param on first line!");
+				}
+			}
+			saveStream.get(param, 9, ':');
+			std::remove(param, param+sizeof(param), ' ');
+			streamSize = getStreamSize();
+			saveStream.get(buff, 2);
+			saveStream.getline(buff, 1024);
+			if (std::strlen(buff) != streamSize) {
+				throw std::invalid_argument("Invalid parameter length!");
+			}
+			
+			switch (*param) {
+				case (*"GAME"):
+					if (*buff != *"Pattern") {
+						throw std::invalid_argument("Invalid game name!");
+					}
+					break;
+				case (*"CPARAMS"):
+				case (*"PARAMS"):
+					if (std::regex_search(buff, buffMatch, paramsRegEx)) {
+						width = std::stoi(buffMatch[1].str());
+						height = std::stoi(buffMatch[2].str());
+					} else {
+						throw std::invalid_argument("Invalid format of CPARAMS or PARAMS!");
+					}	
+					break;
+				case (*"MOVE"):
+				case (*""):
+					alreadyMetaData = false;
+					break;
+			}
+		}
 	};
 }
 
