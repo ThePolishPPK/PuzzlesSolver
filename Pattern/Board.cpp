@@ -6,6 +6,7 @@
 #include <string>
 #include <cstring>
 #include <cstdlib>
+#include <map>
 #include <regex>
 #include <istream>
 
@@ -203,16 +204,17 @@ namespace sgt::pattern {
 
 	/**
 	 * @breif  Read save from stream
-     * @details
-     * Method read save data stream and create board.
-     * @param saveStream Data stream
-     * @throw std::invalid_argument When save data are incorrect
-     * @return Builded @ref Board "board" object from recived data stream
-	 * @todo Make parse for: DESC, NSTATES, STATESPOS and MOVEs analyzer
+	 * @details
+	 * Method read save data stream and create board.
+	 * @param saveStream Data stream
+	 * @throw std::invalid_argument When save data are incorrect
+	 * @return Builded @ref Board "board" object from recived data stream
+	 * @todo Make parse for: MOVEs analyzer
 	 */
 	Board Board::parseSave(std::istream& saveStream) {
-		char buff[1024];
-		char param[9];
+		char buff[2048];
+		std::string param, data;
+		char status = 0b00000000;
 		unsigned short streamSize;
 		bool hasSaveFileHeader = false;
 		bool alreadyMetaData = true;
@@ -220,48 +222,74 @@ namespace sgt::pattern {
 		unsigned char width, height;
 		unsigned short nstates, statepos;
 		std::cmatch buffMatch;
-		
-		std::regex paramsRegEx("^([0-9]+)x([0-9]+)$");
-		auto getStreamSize = [&saveStream](){
-			char buff2[8];
-			saveStream.get(buff2, 2);
-			saveStream.get(buff2, 8, ':');
-			return std::atoi(buff2);
+		std::map<std::string, unsigned char> paramFlags = {
+			{"GAME", 0b1}, {"PARAMS", 0b10}, {"DESC", 0b100},
+			{"NSTATES", 0b1000}, {"STATEPOS", 0b10000}, {"CPARAMS", 0b100000}
 		};
 		
+		std::regex lineRegEx("^([A-Z]+) *:([0-9]+):(.*)$");
+		std::regex paramsRegEx("^([0-9]+)x([0-9]+)$");
+		std::regex descRegEx("^(([0-9]\\.?\\/?)+)$");
+		
 		while (alreadyMetaData) {
+			saveStream.getline(buff, 2048);
+			if (not std::regex_search(buff, buffMatch, lineRegEx)) {
+				throw std::invalid_argument("Invalid line format!");
+			}
+			param = buffMatch[1].str();
+			streamSize = std::stoi(buffMatch[2].str());
+			data = buffMatch[3].str();
+			if (data.length() != streamSize) {
+				throw std::invalid_argument("Invalid parameter length!");
+			}
 			if (not hasSaveFileHeader) {
-				saveStream.getline(buff, 1024);
-				if (*buff == *"SAVEFILE:41:Simon Tatham's Portable Puzzle Collection") {
+				if (param == "SAVEFILE" && data == "Simon Tatham's Portable Puzzle Collection") {
 					hasSaveFileHeader = true;
 					continue;
 				} else {
 					throw std::invalid_argument("Missing valid SAVEFILE param on first line!");
 				}
 			}
-			saveStream.get(param, 9, ':');
-			std::remove(param, param+sizeof(param), ' ');
-			streamSize = getStreamSize();
-			saveStream.get(buff, 2);
-			saveStream.getline(buff, 1024);
-			if (std::strlen(buff) != streamSize) {
-				throw std::invalid_argument("Invalid parameter length!");
+			if (0 < paramFlags.count(param)) {
+				if (status & paramFlags[param]) {
+					throw std::invalid_argument("Cannot repeat parameter!");
+				} else {
+					status |= paramFlags[param];
+				}
 			}
-			
-			switch (*param) {
+			switch (*param.c_str()) {
 				case (*"GAME"):
-					if (*buff != *"Pattern") {
+					if (data != "Pattern") {
 						throw std::invalid_argument("Invalid game name!");
 					}
 					break;
 				case (*"CPARAMS"):
 				case (*"PARAMS"):
-					if (std::regex_search(buff, buffMatch, paramsRegEx)) {
+					if (std::regex_search(data.c_str(), buffMatch, paramsRegEx)) {
 						width = std::stoi(buffMatch[1].str());
 						height = std::stoi(buffMatch[2].str());
 					} else {
 						throw std::invalid_argument("Invalid format of CPARAMS or PARAMS!");
-					}	
+					}
+					break;
+				case (*"DESC"):
+					if (std::regex_search(data, descRegEx)) {
+						description = data;
+					} else {
+						throw std::invalid_argument("Invalid structure of DESC parameter!");
+					}
+					break;
+				case (*"NSTATES"):
+					nstates = std::stoi(data);
+					if (std::to_string(nstates) != data) {
+						throw std::invalid_argument("Invalid NSTATES parameter type!");
+					}
+					break;
+				case (*"STATEPOS"):
+					statepos = std::stoi(data);
+					if (std::to_string(statepos) != data) {
+						throw std::invalid_argument("Invalid STATEPOS parameter type!");
+					}
 					break;
 				case (*"MOVE"):
 				case (*""):
@@ -269,6 +297,23 @@ namespace sgt::pattern {
 					break;
 			}
 		}
+		for (auto flag=paramFlags.begin(); flag != paramFlags.end(); flag++) {
+			if (not (status & flag->second)) {
+				throw std::invalid_argument("Missing parameter: "+flag->first+"!");
+			}
+		}
+		if (std::count(description.begin(), description.end(), '/') != width+height-1) {
+			throw std::invalid_argument("Invalid DESC parameter! Contain invalid count of parameters!");
+		}
+		std::string gameID("");
+		gameID.append(std::to_string(width));
+		gameID.append("x");
+		gameID.append(std::to_string(height));
+		gameID.append(":");
+		gameID.append(description);
+		Board output = Board::parseGameID(const_cast<char*>(gameID.c_str()));
+		
+		return output;
 	};
 }
 
