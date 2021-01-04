@@ -143,10 +143,10 @@ TEST(BoardTest, parseSave) {
 		{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
 		{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}
 	};
-	std::string save("SAVEFILE:41:Simon Tatham's Portable Puzzle Collection\nVERSION :1:1\nGAME    :7:Pattern\nPARAMS  :3:7x7\nCPARAMS :3:7x7\nSEED    :15:730289631514132\nDESC    :41:2.2/2/1.1/1/5/1.5/1.4/3.2/2/2/3/5/1.3/1.3/3.1\nNSTATES :2:18\nSTATEPOS:2:18\nMOVE    :8:F6,5,1,1\nMOVE    :8:F5,4,1,1\nMOVE    :8:F4,6,1,1\nMOVE    :8:F5,6,1,1\nMOVE    :8:F4,5,1,1\nMOVE    :8:F0,0,1,1\nMOVE    :8:F2,0,1,1\nMOVE    :8:E2,4,1,1\nMOVE    :8:E4,2,1,1\nMOVE    :8:E2,2,1,1\nMOVE    :8:U2,4,1,1\nMOVE    :8:F1,4,1,1\nMOVE    :8:F5,0,1,1\nMOVE    :8:F6,0,1,1\nMOVE    :8:E6,1,1,1\nMOVE    :8:E5,1,1,1\nMOVE    :8:E4,1,1,1");
+	std::string save("SAVEFILE:41:Simon Tatham's Portable Puzzle Collection\nVERSION :1:1\nGAME    :7:Pattern\nPARAMS  :3:7x7\nCPARAMS :3:7x7\nSEED    :15:730289631514132\nDESC    :41:2.2/2/1.1/1/5/1.5/1.4/3.2/2/2/3/5/1.3/1.3\nNSTATES :2:18\nSTATEPOS:2:18\nMOVE    :8:F6,5,1,1\nMOVE    :8:F5,4,1,1\nMOVE    :8:F4,6,1,1\nMOVE    :8:F5,6,1,1\nMOVE    :8:F4,5,1,1\nMOVE    :8:F0,0,1,1\nMOVE    :8:F2,0,1,1\nMOVE    :8:E2,4,1,1\nMOVE    :8:E4,2,1,1\nMOVE    :8:E2,2,1,1\nMOVE    :8:U2,4,1,1\nMOVE    :8:F1,4,1,1\nMOVE    :8:F5,0,1,1\nMOVE    :8:F6,0,1,1\nMOVE    :8:E6,1,1,1\nMOVE    :8:E5,1,1,1\nMOVE    :8:E4,1,1,1");
 	
 	std::vector<std::tuple<unsigned short, unsigned char, const char*, const char*>> changesToFail = {
-		{197, 0, "/3.1", "Invalid description! Parameter 3.1 is additional!"},
+		{153, 44, "45:2.2/2/1.1/1/5/1.5/1.4/3.2/2/2/3/5/1.3/1.3/3.1", "Invalid description! Parameter 3.1 is additional!"},
 		{30, 1, "n", "Invalid save file text!"},
 		{76, 9, "6:Undead", "Invalid game name!"},
 		{214, 1, "9", "Invalid NSTATES!"},
@@ -196,7 +196,6 @@ TEST(BoardTest, parseSave) {
 				<< typeToName(tempCorrect.getBlock(x, y).getType()) << ".";
 		}
 	}
-	
 	for (auto change=changesToFail.begin(); change != changesToFail.end(); change++) {
 		std::string tempSave = save;
 		tempSave.replace(
@@ -205,7 +204,6 @@ TEST(BoardTest, parseSave) {
 			std::get<2>(*change)
 		);
 		std::stringstream tempStream(tempSave, std::stringstream::in);
-		
 		ASSERT_THROW(
 			Board::parseSave(tempStream),
 			std::invalid_argument

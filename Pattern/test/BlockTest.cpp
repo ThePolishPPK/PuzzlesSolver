@@ -41,5 +41,5 @@ TEST(BlockTest, changeType) {
 	Block unchangeableBlock(4, 2,Type::Empty, true);
 	ASSERT_NO_THROW({changableBlock.changeType(Type::Black);}) << "Block was been declared as unlocked and must be changeable!";
 	ASSERT_EQ(changableBlock.getType(), Type::Black) << "Type wasn't been changed!";
-	ASSERT_ANY_THROW(unchangeableBlock.changeType(Type::White);) << "Block was been declared as locked and mustn't be changeable!";
+	ASSERT_ANY_THROW(unchangeableBlock.changeType(Type::White);) << "Block was been declared as locked and musn't be changeable!";
 }

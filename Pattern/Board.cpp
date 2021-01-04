@@ -8,6 +8,7 @@
 #include <cstdlib>
 #include <map>
 #include <regex>
+#include <functional>
 #include <istream>
 
 /**
@@ -31,8 +32,8 @@ namespace sgt::pattern {
 	 * @throw	std::invalid_argument When @p width or @p height equal zero
 	 */
 	Board::Board(unsigned char width, unsigned char height) : width(width), height(height) {
-		if (width <= 0 || height <= 0) {
-			throw std::invalid_argument("Width and/or Height can't be lower or equal zero!");
+		if (width == 0 || height == 0) {
+			throw std::invalid_argument("Width and/or Height can't equal zero!");
 		}
 		for (unsigned char y=0; y<height; y++) {
 			this->_allocatedBlock.second.push_back(std::vector<unsigned char>());
@@ -142,7 +143,7 @@ namespace sgt::pattern {
 		std::string gameID = this->exportGameID();
 		gameID = gameID.substr(gameID.find(':')+1);
 		std::string moves = "";
-		std::string tempMove = "";
+		std::string tempMove;
 		unsigned short countOfMoves = 0;
 		std::string output = "SAVEFILE:41:Simon Tatham's Portable Puzzle Collection\nVERSION :1:1\nGAME    :7:Pattern\nPARAMS  :";
 		output.append(std::to_string(size.size())+":"+size);
@@ -182,7 +183,7 @@ namespace sgt::pattern {
 	 */
 	std::string Board::exportGameID() {
 		std::string output = std::to_string(this->width)+"x"+std::to_string(this->height)+":";
-		std::vector<unsigned char> tempSessions({});
+		std::vector<unsigned char> tempSessions;
 		for (unsigned short q=0; q<this->width+this->height; q++) {
 			if (q < this->width) {
 				tempSessions = this->getSessionsInColumn(q);
@@ -209,7 +210,6 @@ namespace sgt::pattern {
 	 * @param saveStream Data stream
 	 * @throw std::invalid_argument When save data are incorrect
 	 * @return Builded @ref Board "board" object from recived data stream
-	 * @todo Make parse for: MOVEs analyzer
 	 */
 	Board Board::parseSave(std::istream& saveStream) {
 		char buff[2048];
@@ -218,6 +218,7 @@ namespace sgt::pattern {
 		unsigned short streamSize;
 		bool hasSaveFileHeader = false;
 		bool alreadyMetaData = true;
+		bool firstMoveInMeta = false;
 		std::string description;
 		unsigned char width, height;
 		unsigned short nstates, statepos;
@@ -230,9 +231,13 @@ namespace sgt::pattern {
 		std::regex lineRegEx("^([A-Z]+) *:([0-9]+):(.*)$");
 		std::regex paramsRegEx("^([0-9]+)x([0-9]+)$");
 		std::regex descRegEx("^(([0-9]\\.?\\/?)+)$");
+		std::regex moveRegEx("^(E|F|U)([0-9]+),([0-9]+),([0-9]+),([0-9]+)$");
 		
-		while (alreadyMetaData) {
+		auto readData = [&buff, &buffMatch, &param, &streamSize, &data, &saveStream, &lineRegEx](){
 			saveStream.getline(buff, 2048);
+			if (*buff == *"") {
+				std::memcpy(buff, "END     :0:", 12);
+			}
 			if (not std::regex_search(buff, buffMatch, lineRegEx)) {
 				throw std::invalid_argument("Invalid line format!");
 			}
@@ -242,6 +247,9 @@ namespace sgt::pattern {
 			if (data.length() != streamSize) {
 				throw std::invalid_argument("Invalid parameter length!");
 			}
+		};
+		while (alreadyMetaData) {
+			readData();
 			if (not hasSaveFileHeader) {
 				if (param == "SAVEFILE" && data == "Simon Tatham's Portable Puzzle Collection") {
 					hasSaveFileHeader = true;
@@ -257,44 +265,39 @@ namespace sgt::pattern {
 					status |= paramFlags[param];
 				}
 			}
-			switch (*param.c_str()) {
-				case (*"GAME"):
-					if (data != "Pattern") {
-						throw std::invalid_argument("Invalid game name!");
-					}
-					break;
-				case (*"CPARAMS"):
-				case (*"PARAMS"):
-					if (std::regex_search(data.c_str(), buffMatch, paramsRegEx)) {
-						width = std::stoi(buffMatch[1].str());
-						height = std::stoi(buffMatch[2].str());
-					} else {
-						throw std::invalid_argument("Invalid format of CPARAMS or PARAMS!");
-					}
-					break;
-				case (*"DESC"):
-					if (std::regex_search(data, descRegEx)) {
-						description = data;
-					} else {
-						throw std::invalid_argument("Invalid structure of DESC parameter!");
-					}
-					break;
-				case (*"NSTATES"):
-					nstates = std::stoi(data);
-					if (std::to_string(nstates) != data) {
-						throw std::invalid_argument("Invalid NSTATES parameter type!");
-					}
-					break;
-				case (*"STATEPOS"):
+			if (param == "GAME") {
+				if (data != "Pattern") {
+					throw std::invalid_argument("Invalid game name!");
+				}
+			} else if (param == "CPARAMS" || param == "PARAMS") {
+				if (std::regex_search(data.c_str(), buffMatch, paramsRegEx)) {
+					width = std::stoi(buffMatch[1].str());
+					height = std::stoi(buffMatch[2].str());
+				} else {
+					throw std::invalid_argument("Invalid format of CPARAMS or PARAMS!");
+				}
+			} else if (param == "DESC") {
+				if (std::regex_search(data, descRegEx)) {
+					description = data;
+				} else {
+					throw std::invalid_argument("Invalid structure of DESC parameter!");
+				}
+			} else if (param == "NSTATES") {
+				nstates = std::stoi(data);
+				if (std::to_string(nstates) != data) {
+					throw std::invalid_argument("Invalid NSTATES parameter type!");
+				}
+			} else if (param == "STATEPOS") {
 					statepos = std::stoi(data);
 					if (std::to_string(statepos) != data) {
 						throw std::invalid_argument("Invalid STATEPOS parameter type!");
 					}
-					break;
-				case (*"MOVE"):
-				case (*""):
-					alreadyMetaData = false;
-					break;
+			} else if (param == "END" | param == "MOVE") {
+				if (param == "MOVE") {
+					firstMoveInMeta = true;
+				}
+				alreadyMetaData = false;
+				break;
 			}
 		}
 		for (auto flag=paramFlags.begin(); flag != paramFlags.end(); flag++) {
@@ -305,14 +308,55 @@ namespace sgt::pattern {
 		if (std::count(description.begin(), description.end(), '/') != width+height-1) {
 			throw std::invalid_argument("Invalid DESC parameter! Contain invalid count of parameters!");
 		}
+		if (nstates < statepos) {
+			throw std::invalid_argument("Parameter STATEPOS can't be greater than NSTATES!");
+		}
 		std::string gameID("");
+		unsigned short accStatepos = 0;
+		unsigned short accNstates = 0;
 		gameID.append(std::to_string(width));
 		gameID.append("x");
 		gameID.append(std::to_string(height));
 		gameID.append(":");
 		gameID.append(description);
 		Board output = Board::parseGameID(const_cast<char*>(gameID.c_str()));
-		
+		std::map<std::string, Type> moveToType = {
+			{"E", Type::White}, {"F", Type::Black}, {"U", Type::Empty}
+		};
+		while (accNstates < nstates) {
+			if (not firstMoveInMeta) {
+				readData();
+			} else {
+				firstMoveInMeta = false;
+			}
+			if (param == "END") {
+				break;
+			}
+			if (not std::regex_search(data.c_str(), buffMatch, moveRegEx)) {
+				throw std::invalid_argument("Invalid format of MOVE parameter!");
+			}
+			if  (accStatepos < statepos) {
+				unsigned char x, y, w, h;
+				Type moveType = moveToType[buffMatch[1].str()];
+				x = std::stoi(buffMatch[2].str());
+				y = std::stoi(buffMatch[3].str());
+				w = std::stoi(buffMatch[4].str());
+				h = std::stoi(buffMatch[5].str());
+				if (x+w > width || y+h > height) {
+					throw std::invalid_argument("Invalid MOVE parameter data! Location of block, out of range!");
+				}
+				for (char xpos=x; xpos<x+w; xpos++) {
+					for (char ypos=y; ypos<y+h; ypos++) {
+						output.getBlock(xpos, ypos).changeType(moveType);
+					}
+				}
+				accStatepos++;
+			}
+			accNstates++;
+		}
+		if (accNstates > nstates) {
+			throw std::invalid_argument("Invalid count of states (NSTATES param)");
+		}
 		return output;
 	};
 }
