@@ -20,9 +20,7 @@ namespace sgt::pattern {
 	 * @brief	Constructor for @ref Solve class
 	 * @param board Address for @ref Board to operate
 	 */
-	Solve::Solve(Board& board) : _board(board) {
-	
-	};
+	Solve::Solve(Board& board) : _board(board) {};
 
 	/**
 	 * @brief	Method search shadred blocks on hem offsets
@@ -158,5 +156,63 @@ namespace sgt::pattern {
 		this->x = x;
 		this->y = y;
 		this->type = type;
+	};
+
+	/**
+	 * @brief	Method fill @ref Type "empty" @ref Block "blocks" in line if already solved
+	 * @details
+	 * Method scan line and count used black blocks. When count of black blocks is equal sum of sessions then all empty blocks make white.
+	 * @return	All missing white blocks in solved lines
+	 */
+	std::vector<solvedBlock_t> Solve::getFillingWhite() {
+		std::vector<solvedBlock_t> output;
+		std::vector<std::vector<bool>> alreadySet(this->_board.width, std::vector<bool>(this->_board.height, false));
+		unsigned char offset, lineNumber;
+		unsigned char* x = &offset;
+		unsigned char* y = &lineNumber;
+		bool scanningColumns = false;
+		unsigned char offsetLength = this->_board.width;
+		unsigned char linesCount = this->_board.height;
+		for (lineNumber=0; lineNumber<=linesCount; lineNumber++) {
+			if (lineNumber == linesCount) {
+				if (not scanningColumns) {
+					scanningColumns = true;
+					lineNumber = 0;
+					linesCount = this->_board.width;
+					y = &offset;
+					x = &lineNumber;
+				} else {break;}
+				
+			}
+			unsigned char blackBlocks = 0;
+			unsigned char requiredBlackBlocks = 0;
+			std::vector<std::pair<unsigned char, unsigned char>> allEmptyBlocks;
+			std::vector<unsigned char> sessionsInLine;
+			if (scanningColumns) {
+				sessionsInLine = this->_board.getSessionsInColumn(*x);
+			} else {
+				sessionsInLine = this->_board.getSessionsInRow(*y);
+			}
+			for (auto& session : sessionsInLine)
+				requiredBlackBlocks += session;
+			
+			for (offset=0; offset<offsetLength; offset++) {
+				Block block = this->_board.getBlock(*x, *y);
+				if (block.getType() == Type::Black) {
+					blackBlocks++;
+				} else if (block.getType() == Type::Empty) {
+					allEmptyBlocks.push_back({*x, *y});
+				}
+			}
+			if (blackBlocks == requiredBlackBlocks) {
+				for (auto& block : allEmptyBlocks) {
+					if (not alreadySet[block.first][block.second]) {
+						alreadySet[block.first][block.second] = true;
+						output.push_back({block.first, block.second, Type::White});
+					}
+				}
+			}
+		}
+		return output;
 	};
 }

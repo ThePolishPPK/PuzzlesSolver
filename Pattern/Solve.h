@@ -18,6 +18,7 @@ namespace sgt::pattern {
 		Solve(Board& board);
 		std::vector<solvedBlock_t> getMaxDeparturedBlocks();
 		std::vector<solvedBlock_t> getComplementaryBlocks();
+		std::vector<solvedBlock_t> getFillingWhite();
 		void appendSolvedBlocks(std::vector<solvedBlock_t> solvedBlocks);
 
 	private:

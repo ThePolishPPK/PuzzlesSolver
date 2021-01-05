@@ -12,6 +12,7 @@ namespace sgt::pattern {
 		Board(unsigned char width, unsigned char height);
 		static Board parseGameID(char* gameID);
 		static Board parseSave(std::istream& saveStream);
+		static Board parseSave(std::string& save);
 		Block& getBlock(unsigned char x, unsigned char y);
 		std::vector<unsigned char> getSessionsInColumn(unsigned char column);
 		std::vector<unsigned char> getSessionsInRow(unsigned char row);

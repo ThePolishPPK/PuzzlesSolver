@@ -10,6 +10,7 @@
 #include <regex>
 #include <functional>
 #include <istream>
+#include <sstream>
 
 /**
  * @author ThePPK
@@ -358,6 +359,10 @@ namespace sgt::pattern {
 			throw std::invalid_argument("Invalid count of states (NSTATES param)");
 		}
 		return output;
+	};
+	Board Board::parseSave(std::string& save) {
+		std::stringstream stream(save);
+		return Board::parseSave(stream);
 	};
 }
 
